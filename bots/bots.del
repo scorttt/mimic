@@ -1,0 +1,146 @@
+import "../main.del";
+
+Player[] owner_bots: FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
+Player[] living_bots: FilteredArray(AllLivingPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player);
+
+playervar Boolean attacked; // bool for if bot is attacked
+playervar Boolean bot_alive; // bot is alive
+playervar Number max_health; // maximum health a bot spawned with
+playervar Any clone_effects;
+
+
+disabled rule: "---------------- Bot ----------------"{}
+
+rule: "[Bot] :: Init"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (!IsDuplicating())
+{
+    StartForcingDummyBotName(player, <"<0>", owner>);
+    SetRespawnMaxTime(player, S_RESPAWN_TIME);
+    SetUltimateAbilityEnabled(player, false);
+
+    if (s_aim_effect)
+    {
+        CreateBeamEffect(IsAlive() ? owner : null, BeamType.TorbjornTurretSightBeam, EyePosition(), 
+            UpdateEveryFrame(RayCastHitPosition(EyePosition(), EyePosition() + FacingDirectionOf() * 100, AllLivingPlayers(OppositeTeamOf(TeamOf())), AllLivingPlayers(TeamOf()), true)), 
+            TeamOf() == Team.Team1 
+                ? Color.Team1
+                : Color.Team2);
+    }
+
+    if (s_echo_effect)
+    {
+        DestroyEffect(clone_effects);
+
+        Wait(2);
+
+        CreateEffect(all, Effect.EchoCloningEffect, Position: player, Color: 
+        TeamOf() == Team.Team1 
+                ? Color.Team1
+                : Color.Team2);
+        clone_effects[0] = LastCreatedEntity();
+        // CreateEffect(all, Effect.EchoCloningSound, Position: player, Radius: 20);
+        // clone_effects[1] = LastCreatedEntity();
+    }
+}
+
+rule: "[Bot] :: Alive"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (IsAlive())
+{
+    bot_alive = true;
+
+    EnableRespawning();
+
+    SetWeapon(player, Weapon(owner));
+
+    Communicate(player, Communication.WithYou);
+}
+
+rule: "[Bot] :: Dead"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (IsDead())
+{
+    bot_alive = false;
+    attacked = false;
+    SetUltimateCharge(player, 0);
+    SetUltimateAbilityEnabled(player, false);
+}
+
+rule: "[Bot] :: Incorrect Hero"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (!EntityExists(owner) ||  HeroOf() != HeroOf(owner) || TeamOf() != TeamOf(owner))
+{
+    Wait(0.080);
+    DestroyDummyBot(TeamOf(), SlotOf());
+}
+
+rule: "[Bot] :: Enable Ult"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (!IsDuplicating(owner))
+if (UltimateChargePercent(owner) == 100)
+if (bot_alive)
+{
+    SetUltimateAbilityEnabled(player, true);
+    SetUltimateCharge(player, 100);
+}
+
+rule: "[Bot] :: Disable ult"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (UltimateChargePercent(owner) != 100)
+{
+    WaitIfTrue(1);
+    SetUltimateCharge(player, 0);
+    SetUltimateAbilityEnabled(player, false);
+}
+
+// rule: "[Bot] :: Bot Ult Charge Failsafe"
+// Event.OngoingPlayer
+// if (IsDummyBot() && UltimateChargePercent(owner) != 100 && UltimateChargePercent() > 0)
+// {
+//     WaitIfTrue(3);
+//     SetUltimateAbilityEnabled(player, false);
+//     SetUltimateCharge(player, 0);
+// }
+
+void TeleportBot() playervar "Teleport Sub"
+{
+    // Teleport(player, PositionOf(owner) + WorldVectorOf(Vector(0, 0, -0.5), owner));
+
+    Vector position = (PositionOf(owner) + Vector(0, 0.2, 0));
+    Teleport(player, RayCastHitPosition(position, position + WorldVectorOf(Vector(0, 0, -1.5), owner)));
+
+    AbortIf(IsHero(Hero.Sombra) && IsUsingAbility1());
+
+    PlayEffect(all, PlayEffect.EchoStickyBombExplosionEffect, Color.White, player);
+    PlayEffect(all, PlayEffect.TracerRecallDisappearEffect, Color.White, player);
+}
+
+rule: "[Bot] :: Owner out of range"
+Event.OngoingPlayer
+if (bot_alive)
+if (IsAlive(owner))
+if (!cced)
+if (DistanceBetween(owner, player) > S_DISTANCE)
+{
+    TeleportBot();
+}
+
+rule: "[Bot] :: Owner out of sight"
+Event.OngoingPlayer
+if (bot_alive)
+if (IsAlive(owner))
+if (!cced)
+if (!IsInLineOfSight(owner, player))
+{
+    if (!IsInSpawnRoom())
+        WaitIfTrue(S_OOS_TIME);
+
+    TeleportBot();
+}
