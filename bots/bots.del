@@ -1,7 +1,5 @@
 import "../main.del";
 
-Player[] living_bots: FilteredArray(AllLivingPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player);
-
 playervar Boolean attacked; // bool for if bot is attacked
 playervar Boolean bot_alive; // bot is alive
 playervar Number max_health; // maximum health a bot spawned with
@@ -56,6 +54,7 @@ if (IsAlive())
     SetWeapon(player, Weapon(owner));
 
     Communicate(player, Communication.WithYou);
+    living_bots = FilteredArray(AllLivingPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Bot] :: Dead"
@@ -67,6 +66,8 @@ if (IsDead())
     attacked = false;
     SetUltimateCharge(player, 0);
     SetUltimateAbilityEnabled(player, false);
+
+    living_bots = FilteredArray(AllLivingPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Bot] :: Incorrect Hero"
