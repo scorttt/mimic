@@ -1,6 +1,5 @@
 import "../main.del";
 
-Player[] owner_bots: FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
 Player[] living_bots: FilteredArray(AllLivingPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player);
 
 playervar Boolean attacked; // bool for if bot is attacked
