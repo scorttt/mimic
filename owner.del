@@ -1,6 +1,8 @@
 import "main.del";
 
 playervar Player owner; // player who owns a set of bots
+playervar Player[] owner_bots; // array of bots owned
+playervar Player[] living_bots; // array of all living bots. todo: i technically dont even need this and can just check owner_bots with bot_alive
 playervar Boolean owner_alive; // whether the owner is alive
 playervar Boolean is_rezzing; // checks if the owner is replacing a bot
 playervar Any heal_ot; // heal over time for the owner
@@ -36,6 +38,8 @@ if (owned_bots.Length < Floor((team_size.Length - spawned_humans.Length) / human
     Wait(0.064);
 
     LoopIfConditionIsTrue();
+
+    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Owner] :: Destroy Bots"
@@ -50,6 +54,8 @@ if (owned_bots.Length > Floor((team_size.Length - humans.Length) / humans.Length
     Wait(0.064);
 
     LoopIfConditionIsTrue();
+
+    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Owner] :: Replace Healthiest Bot"
@@ -67,6 +73,31 @@ if (IsTrueForAny(AllLivingPlayers(TeamOf()), Curr().owner == player && IsDummyBo
     Number health_of = Health(new_player);
     Number ammo0 = Ammo(new_player, 0);
     Number ammo1 = Ammo(new_player, 1);
+
+    Number ab1 = AbilityCooldown(new_player, Button.Ability1);
+    Number ab2 = AbilityCooldown(new_player, Button.Ability2);
+    Number pri = AbilityCooldown(new_player, Button.PrimaryFire);
+    Number sec = AbilityCooldown(new_player, Button.SecondaryFire);
+    Number jmp = AbilityCooldown(new_player, Button.Jump);
+    Number crch = AbilityCooldown(new_player, Button.Crouch);
+    Number ab1_chrg = AbilityCharge(new_player, Button.Ability1);
+    Number ab2_chrg = AbilityCharge(new_player, Button.Ability2);
+    Number pri_res = AbilityResource(new_player, Button.PrimaryFire);
+    Number sec_res = AbilityResource(new_player, Button.SecondaryFire);
+    Number jmp_res = AbilityResource(new_player, Button.Jump);
+
+    SetAbilityResource(new_player, Button.PrimaryFire, pri_res);
+    SetAbilityResource(new_player, Button.SecondaryFire, sec_res);
+    SetAbilityResource(new_player, Button.Jump, jmp_res);
+    SetAbilityCharge(new_player, Button.Ability1, ab1_chrg);
+    SetAbilityCharge(new_player, Button.Ability2, ab2_chrg);
+    SetAbilityCooldown(new_player, Button.Ability1, ab1);
+    SetAbilityCooldown(new_player, Button.Ability2, ab2);
+    SetAbilityCooldown(new_player, Button.PrimaryFire, pri);
+    SetAbilityCooldown(new_player, Button.SecondaryFire, sec);
+    SetAbilityCooldown(new_player, Button.Jump, jmp);
+    SetAbilityCooldown(new_player, Button.Crouch, crch);
+
     Kill(new_player);
     Teleport(player, position_of);
     SetFacing(player, facing, Relative.ToWorld);
