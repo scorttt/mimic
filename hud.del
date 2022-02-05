@@ -6,6 +6,10 @@ playervar Number damage_dealt; // amount of damage owner and bots have done
 playervar Number damage_taken; // amount of damage owner and bots have taken
 playervar Number heal_dealt; // amount of healing owner and bots have done
 playervar Number heal_taken; // amount of healing owner and bots have recieved
+playervar Number health;
+playervar String hp_str;
+playervar String hashp_str;
+playervar String dmghp_str;
 
 Number percentage: (NormalizedHealth() * 100);
 Number r: (percentage <= 50) ? 255 : Floor(256 - (percentage - 50) * 5.12);
@@ -79,6 +83,15 @@ if (attack_timer == 0)
     attacked = false;
     timer = 0;
     StopChasingVariable(timer);
+}
+
+void UpdateHpStr() playervar "Update HP String"
+{
+    hashp_str = StringSlice(hp_arr[0], 0, (Near(Health() / 25)));
+    dmghp_str = StringSlice(hp_arr[1], 0, (MaxHealth() / 25) - (Near(Health() / 25)));
+    hp_str = hashp_str + dmghp_str;
+
+    // hp_str = hp_arr[ Floor(Health() / (MaxHealth() + 1) * 20) ];
 }
 
 rule: "[HUD] :: Stats"
@@ -219,9 +232,7 @@ if (HasSpawned())
             : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Crouch)>>
         : "">, 
     Text:           IsAlive() 
-                        ? <"<0> HP <1>", Ceiling(Health()), attacked 
-                                                                ? IconString(Icon.Warning) 
-                                                                : ""> 
+                        ? <"<0> <1>", StringSlice(hp_arr[0], 0, (Near(Health() / 25))) + StringSlice(hp_arr[1], 0, (MaxHealth() / 25) - (Near(Health() / 25))), attacked ? IconString(Icon.Warning) : ""> 
                         : "Dead",
     Location:       Location.Left, 
     SortOrder:      SlotOf() + 1, 

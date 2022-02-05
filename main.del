@@ -35,7 +35,9 @@ globalvar Hero[] a2_arr;
 globalvar Hero[] a2c_arr;
 globalvar Hero[] j_arr;
 globalvar Hero[] c_arr;
+globalvar String[] hp_arr;
 
+disabled rule: "---------------- All ----------------"{}
 
 rule: "Initial Global"
 {
@@ -51,8 +53,10 @@ rule: "Initial Global"
     j_arr = [Hero.Hanzo]; // jump
     c_arr = [Hero.WreckingBall]; // crouch
     // buttons = [Button.PrimaryFire, Button.SecondaryFire, Button.Ability1, Button.Ability2, Button.Melee, Button.Crouch, Button.Interact, Button.Jump, Button.Reload, Button.Ultimate];
+    hp_arr = [  "■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■",
+                "□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□"];
 
-    S_TEAM_SIZE = WorkshopSettingCombo("General", "Maximum bots per team (11 & higher will make uneven teams and may crash the server!) (5)", 0, ["5", "7", "9", "11", "13", "15", "17"], 1);
+    S_TEAM_SIZE = WorkshopSettingCombo("General", "Team Size (12v12 and greater will cause uneven teams and affect performance!) (6v6)", 0, ["6v6", "8v8", "10v10", "12v12", "14v10 (!)", "16v8 (!)", "18v6 (!)"], 1);
 
     if (S_TEAM_SIZE == 0)
         team_size = [0, 1, 2, 3, 4, 5];
