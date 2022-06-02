@@ -1,0 +1,14 @@
+import "../../main.del";
+
+disabled rule: "---------------- Bastion ----------------"{}
+
+rule: "[HS] :: Bastion Turret After Bot Spawns"
+Event.OngoingPlayer
+Player.Bastion
+if (bot_alive)
+if (IsInAlternateForm(owner))
+{
+    Wait(0.15);
+    PressButton(player, Button.Ability1);
+    LoopIf(!IsInAlternateForm());
+}

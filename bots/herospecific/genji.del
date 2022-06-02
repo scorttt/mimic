@@ -1,0 +1,21 @@
+import "../../main.del";
+
+disabled rule: "---------------- Genji ----------------"{}
+
+rule: "[HS] :: Genji On"
+Event.OngoingPlayer
+Player.Genji
+if (s_genji_nerf)
+if (IsUsingAbility1())
+{
+    StartDamageModification(EnemyPlayers(), player, S_GENJI_DAMAGE);
+    genji_ao = LastDamageModificationID();
+}
+
+rule: "[HS] :: Genji Off"
+Event.OngoingPlayer
+Player.Genji
+if (!IsUsingAbility1())
+{
+    StopDamageModification(genji_ao);
+}

@@ -1,0 +1,25 @@
+import "../../main.del";
+
+disabled rule: "---------------- Mei ----------------"{}
+
+rule: "[HS] :: Mei Ice Block After Bot Spawn"
+Event.OngoingPlayer
+Player.Mei
+if (bot_alive)
+if (IsUsingAbility1(owner))
+{
+    Wait(0.15);
+    PressButton(player, Button.Ability1);
+    LoopIf(!IsUsingAbility1());
+}
+
+rule: "[HS] :: Mei Cancel Ice Block"
+Event.OngoingPlayer
+Player.Mei
+if (bot_alive)
+if (!IsUsingAbility1(owner))
+{
+    // Wait(0.15);
+    CancelPrimaryAction();
+    // LoopIf(IsUsingAbility1());
+}
