@@ -81,7 +81,8 @@
         "Buff Status Effects": true,
         "Debuff Status Effects": true,
         "Buff and Debuff Sounds": true,
-        "Energy Explosion Effects": true
+        "Energy Explosion Effects": true,
+        "Beam Effects": true
       },
       "Description": ""
   }
