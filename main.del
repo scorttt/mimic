@@ -7,7 +7,14 @@ import "owner.del";
 import "hud.del";
 import "bots/bots.del";
 import "bots/input.del";
-import "bots/herospecific.del";
+
+import "bots/herospecific/baptiste.del";
+import "bots/herospecific/bastion.del";
+import "bots/herospecific/echo.del";
+import "bots/herospecific/genji.del";
+import "bots/herospecific/mei.del";
+import "bots/herospecific/reaper.del";
+import "bots/herospecific/sombra.del";
 
 globalvar Number S_DISTANCE; // maximum distance until bot teleports to owner
 globalvar Number S_OOS_TIME; // out of los time before teleport
@@ -19,7 +26,6 @@ globalvar Number S_GENJI_DAMAGE;
 globalvar Boolean s_genji_nerf; // bool genji nerf
 // globalvar Boolean s_heal_toggle; // bool heal over time
 globalvar Boolean s_echo_effect;
-globalvar Boolean s_aim_effect;
 
 playervar Any genji_ao; // genji damage modification
 playervar Boolean cced; // bool for cc status is applied
@@ -28,56 +34,60 @@ globalvar Number[] team_size; // amount of slots per team
 
 globalvar Hero[] pf_arr;
 globalvar Hero[] sf_arr;
+globalvar Hero[] pfr_arr;
 globalvar Hero[] sfr_arr;
 globalvar Hero[] a1_arr;
 globalvar Hero[] a1c_arr;
 globalvar Hero[] a2_arr;
 globalvar Hero[] a2c_arr;
 globalvar Hero[] j_arr;
+globalvar Hero[] jr_arr;
 globalvar Hero[] c_arr;
+globalvar Hero[] weap_arr;
 globalvar String[] hp_arr;
 
 disabled rule: "---------------- All ----------------"{}
 
 rule: "Initial Global"
 {
-    // DisableInspectorRecording();
+    DisableInspectorRecording();
     DisableAnnouncer();
 
     pf_arr = [Hero.Brigitte]; // primary fire
     sf_arr = [Hero.Orisa, Hero.Reinhardt, Hero.Sigma, Hero.WreckingBall, Hero.Doomfist, Hero.Sombra, Hero.Soldier76, Hero.Brigitte, Hero.Lucio]; // secondary fire
+    pfr_arr = [Hero.Moira]; // primary fire resources
     sfr_arr = [Hero.Dva, Hero.Bastion]; // secondary fire resources
     a1c_arr = [Hero.Tracer, Hero.Symmetra, Hero.Junkrat]; // ability 1 charges
     // a2_arr = [Hero.Brigitte]; // uses charges instead
     a2c_arr = [Hero.Brigitte]; // ability 2 charges
     j_arr = [Hero.Hanzo]; // jump
+    jr_arr = [Hero.Pharah]; // jump resources
     c_arr = [Hero.WreckingBall]; // crouch
     // buttons = [Button.PrimaryFire, Button.SecondaryFire, Button.Ability1, Button.Ability2, Button.Melee, Button.Crouch, Button.Interact, Button.Jump, Button.Reload, Button.Ultimate];
-    hp_arr = [  "■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■",
-                "□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□"];
 
-    S_TEAM_SIZE = WorkshopSettingCombo("General", "Team Size (12v12 and greater will cause uneven teams and affect performance!) (6v6)", 0, ["6v6", "8v8", "10v10", "12v12", "14v10 (!)", "16v8 (!)", "18v6 (!)"], 1);
+    S_TEAM_SIZE = WorkshopSettingCombo("General", "Team Size (6v6 and greater will affect performance!) (6v6)", 0, ["6v6", "8v8", "10v10", "12v12"], 1);
 
     if (S_TEAM_SIZE == 0)
-        team_size = [0, 1, 2, 3, 4, 5];
+    {
+        team_size = [0, 1, 2, 3, 4, 5]; 
+    }
     else if (S_TEAM_SIZE == 1)
+    {
         team_size = [0, 1, 2, 3, 4, 5, 6, 7];
+    }
     else if (S_TEAM_SIZE == 2)
+    {
         team_size = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    }
     else if (S_TEAM_SIZE == 3)
+    {
         team_size = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-    else if (S_TEAM_SIZE == 4)
-        team_size = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-    else if (S_TEAM_SIZE == 5)
-        team_size = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    else if (S_TEAM_SIZE == 6)
-        team_size = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    }
 
     S_TIMER_DUR = WorkshopSettingReal("General", "In Combat Timer (6)", 6, 0, 30, 2);
     S_RESPAWN_TIME = WorkshopSettingInteger("General", "Bot Respawn Time (15)", 15, 0, 90, 3);
     // s_heal_toggle = WorkshopSettingToggle("General", "Heal Over Time out of combat (On)", true, 4);
     s_echo_effect = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
-    s_aim_effect = WorkshopSettingToggle("General", "Show bot aim beams (Off)", false, 6);
 
     S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (20)", 20, 0, 100, 1);
     S_OOS_TIME = WorkshopSettingReal("Teleport", "Out of LOS Teleport Time (0.25)", 0.25, 0.016, 5, 2);
@@ -87,7 +97,13 @@ rule: "Initial Global"
 
     CreateHudText(all, null, "ㅤMimic | Created by scort#11221 ", null, Location.Right, 0.1, Color.White, Color.White, Color.White, HudTextRev.VisibleTo);
     CreateHudText(all, null, "ㅤv1.0 | Code: WRYEP ", null, Location.Right, 0.2, Color.White, Color.White, Color.White, HudTextRev.VisibleTo);
-    CreateHudText(all, null, " \n\n\n", null, Location.Left, 0.01);
+    // CreateHudText(all, null, " \n\n\n", null, Location.Left, 0.01);
+}
+
+rule: "[All] :: Player Init"
+Event.OngoingPlayer
+{
+    StartScalingBarriers(player, 0.58);
 }
 
 rule: "[All] :: Human Init"
