@@ -2,18 +2,19 @@ import "main.del";
 
 playervar Player owner; // player who owns a set of bots
 playervar Player[] owner_bots; // array of bots owned
-playervar Player[] living_bots; // array of all living bots. todo: i technically dont even need this and can just check owner_bots with bot_alive
+// playervar Player[] living_bots; // array of all living bots. todo: i technically dont even need this and can just check owner_bots with bot_alive
 playervar Boolean owner_alive; // whether the owner is alive
 playervar Boolean is_rezzing; // checks if the owner is replacing a bot
 playervar Any heal_ot; // heal over time for the owner
 playervar Number timer; // time the owner is out of combat
 playervar Number attack_timer; // attacked timer
 
-disabled rule: "---------------- Owner ----------------"{}
-
 Player[] owned_bots: FilteredArray(AllyPlayers(), Curr().owner == player && IsDummyBot(Curr()) && EntityExists(Curr()));        // owner bots
+Player[] living_bots: FilteredArray(owner_bots, IsAlive());
 Player[] humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()));                                                             // all human players on a team
 Player[] spawned_humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()) && HasSpawned(Curr()));                               // all human players on a team that have spawned
+
+disabled rule: "---------------- Owner ----------------"{}
 
 rule: "[Owner] :: Create Bots"
 Event.OngoingPlayer
@@ -35,7 +36,7 @@ if (owned_bots.Length < Floor((team_size.Length - spawned_humans.Length) / human
     Player temp = PlayersInSlot(bot_slot, TeamOf());
     temp.owner = player;
 
-    Wait(0.064);
+    Wait(0.1);
 
     LoopIfConditionIsTrue();
 
@@ -51,7 +52,7 @@ if (owned_bots.Length > Floor((team_size.Length - humans.Length) / humans.Length
                     LastOf(FilteredArray(team_size, 
                     IsDummyBot(PlayersInSlot(Curr(), TeamOf())) && PlayersInSlot(Curr(), TeamOf()).owner == player && EntityExists(PlayersInSlot(Curr(), TeamOf())))));
 
-    Wait(0.064);
+    Wait(0.1);
 
     LoopIfConditionIsTrue();
 
@@ -64,48 +65,24 @@ if (!IsDummyBot())
 if (!EventWasEnvironment())
 if (IsTrueForAny(AllLivingPlayers(TeamOf()), Curr().owner == player && IsDummyBot(Curr())))
 {
+    Number[] ammo;
     Player[] bots = owner_bots;
     is_rezzing = true;
     // Player new_player = FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player);
     Player new_player = LastOf(SortedArray(FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
     Vector position_of = PositionOf(new_player);
-    Vector facing = FacingDirectionOf(new_player);
+    Vector facing = Facing(new_player);
     Number health_of = Health(new_player);
-    Number ammo0 = Ammo(new_player, 0);
-    Number ammo1 = Ammo(new_player, 1);
-
-    Number ab1 = AbilityCooldown(new_player, Button.Ability1);
-    Number ab2 = AbilityCooldown(new_player, Button.Ability2);
-    Number pri = AbilityCooldown(new_player, Button.PrimaryFire);
-    Number sec = AbilityCooldown(new_player, Button.SecondaryFire);
-    Number jmp = AbilityCooldown(new_player, Button.Jump);
-    Number crch = AbilityCooldown(new_player, Button.Crouch);
-    Number ab1_chrg = AbilityCharge(new_player, Button.Ability1);
-    Number ab2_chrg = AbilityCharge(new_player, Button.Ability2);
-    Number pri_res = AbilityResource(new_player, Button.PrimaryFire);
-    Number sec_res = AbilityResource(new_player, Button.SecondaryFire);
-    Number jmp_res = AbilityResource(new_player, Button.Jump);
-
-    SetAbilityResource(new_player, Button.PrimaryFire, pri_res);
-    SetAbilityResource(new_player, Button.SecondaryFire, sec_res);
-    SetAbilityResource(new_player, Button.Jump, jmp_res);
-    SetAbilityCharge(new_player, Button.Ability1, ab1_chrg);
-    SetAbilityCharge(new_player, Button.Ability2, ab2_chrg);
-    SetAbilityCooldown(new_player, Button.Ability1, ab1);
-    SetAbilityCooldown(new_player, Button.Ability2, ab2);
-    SetAbilityCooldown(new_player, Button.PrimaryFire, pri);
-    SetAbilityCooldown(new_player, Button.SecondaryFire, sec);
-    SetAbilityCooldown(new_player, Button.Jump, jmp);
-    SetAbilityCooldown(new_player, Button.Crouch, crch);
-
+    ammo[0] = Ammo(new_player, 0);
+    ammo[1] = Ammo(new_player, 1);
     Kill(new_player);
     Teleport(player, position_of);
     SetFacing(player, facing, Relative.ToWorld);
     Resurrect();
     MinWait();
     SetPlayerHealth(player, health_of);
-    SetAmmo(player, 0, ammo0);
-    SetAmmo(player, 1, ammo1);
+    SetAmmo(player, 0, ammo[0]);
+    SetAmmo(player, 1, ammo[1]);
     CancelPrimaryAction(bots);
     is_rezzing = false;
 }
@@ -127,20 +104,18 @@ if (!is_rezzing)
 {
     owner_alive = false;
 
-    Player[] bots = owner_bots;
     WaitUntil(owner_alive, 99999); // wait until the owner is alive
-    Respawn(bots);
-    EnableRespawning(bots);
-    EnableNameplates(bots, all);
+    Respawn(owner_bots);
+    EnableRespawning(owner_bots);
+    EnableNameplates(owner_bots, all);
 }
 
 rule: "[Owner] :: Prevent Bot Spawning"
 Event.OngoingPlayer
 if (!owner_alive)
 {
-    Player[] bots = owner_bots;
-    DisableRespawning(bots);
-    DisableNameplates(bots, all); // overwatch has a bug where if the players spawning is disabled and is dead their corpse will have a nameplate
+    DisableRespawning(owner_bots);
+    DisableNameplates(owner_bots, all); // overwatch has a bug where if the players spawning is disabled and is dead their corpse will have a nameplate
 }
 
 // FilteredArray(AllDeadPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player)
@@ -150,8 +125,7 @@ Event.OnDeath
 if (!IsDummyBot()) 
 if (EventWasEnvironment())
 {
-    Player[] bots = owner_bots;
-    Kill(bots);
+    Kill(owner_bots, Attacker() != player ? Attacker() : null);
 }
 
 rule: "[Owner] :: Respawn Failsafe"
