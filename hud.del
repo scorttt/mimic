@@ -6,10 +6,6 @@ playervar Number damage_dealt; // amount of damage owner and bots have done
 playervar Number damage_taken; // amount of damage owner and bots have taken
 playervar Number heal_dealt; // amount of healing owner and bots have done
 playervar Number heal_taken; // amount of healing owner and bots have recieved
-playervar Number health;
-playervar String hp_str;
-playervar String hashp_str;
-playervar String dmghp_str;
 
 Number percentage: (NormalizedHealth() * 100);
 Number r: (percentage <= 50) ? 255 : Floor(256 - (percentage - 50) * 5.12);
@@ -19,6 +15,13 @@ Color health_color: CustomColor(r, g, 0, 255);
 // Color health_color: Colors.Gradient(new ComponentColor(Color.Red), new ComponentColor(Color.Green), NormalizedHealth());
 
 disabled rule: "---------------- HUD Text ----------------"{}
+
+rule: "[HUD] :: Init"
+{
+    // up to 2000hp, anything higher will not be shown
+    hp_arr = [  "●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●●",
+                "◐○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○○"];
+}
 
 rule: "[HUD] :: Kills"
 Event.OnFinalBlow
@@ -38,7 +41,7 @@ Event.OnDamageDealt
 if (Victim() != player)
 if (EventDamage() > 0)
 {
-    (owner == null ? player : owner).damage_dealt += Round(EventDamage());
+    (owner == null ? player : owner).damage_dealt += Near(EventDamage());
 }
 
 rule: "[HUD] :: Update Damage Recieved"
@@ -46,7 +49,7 @@ Event.OnDamageTaken
 if (Attacker() != player)
 if (EventDamage() > 0)
 {
-    (owner == null ? player : owner).damage_taken += Round(EventDamage());
+    (owner == null ? player : owner).damage_taken += Near(EventDamage());
 }
 
 rule: "[HUD] :: Update Heal Dealt"
@@ -54,7 +57,7 @@ Event.OnHealingDealt
 if (Healee() != player)
 if (EventHealing() > 0)
 {
-    (owner == null ? player : owner).heal_dealt += Round(EventHealing());
+    (owner == null ? player : owner).heal_dealt += Near(EventHealing());
 }
 
 rule: "[HUD] :: Update Heal Recieved"
@@ -62,7 +65,7 @@ Event.OnHealingTaken
 if (Healer() != player)
 if (EventHealing() > 0)
 {
-    (owner == null ? player : owner).heal_taken += Round(EventHealing());
+    (owner == null ? player : owner).heal_taken += Near(EventHealing());
 }
 
 rule: "[HUD] :: Bot Under Attack"
@@ -83,15 +86,6 @@ if (attack_timer == 0)
     attacked = false;
     timer = 0;
     StopChasingVariable(timer);
-}
-
-void UpdateHpStr() playervar "Update HP String"
-{
-    hashp_str = StringSlice(hp_arr[0], 0, (Near(Health() / 25)));
-    dmghp_str = StringSlice(hp_arr[1], 0, (MaxHealth() / 25) - (Near(Health() / 25)));
-    hp_str = hashp_str + dmghp_str;
-
-    // hp_str = hp_arr[ Floor(Health() / (MaxHealth() + 1) * 20) ];
 }
 
 rule: "[HUD] :: Stats"
@@ -120,13 +114,8 @@ if (HasSpawned())
     max_health = MaxHealth();
 
     CreateHudText(owner, 
-    Header:         <"<0><1>",  /* <0> */ IsDuplicating() 
-                                                ? <"<0> ", AbilityIconString(Hero.Echo, Button.Ultimate)> 
-                                                : "", 
-                                /* <1> */ HeroIconString(IsDuplicating() 
-                                                        ? HeroBeingDuplicated() 
-                                                        : HeroOf())>,
-    Subheader:      <"<0><1><2><3><4><5><6><7><8><9>",
+    Header:         !IsDuplicating() ? HeroIconString(HeroOf()) : HeroIconString(HeroBeingDuplicated()),
+    Subheader:      IsAlive() ? <"<0><1><2><3><4><5><6><7><8><9><10><11>",
     // ability 1 charges
     ArrayContains(a1c_arr, HeroOf()) || 
     ArrayContains(a1c_arr, HeroBeingDuplicated()) 
@@ -142,9 +131,9 @@ if (HasSpawned())
     !ArrayContains(a1c_arr, HeroBeingDuplicated()) && 
     !IsHero(Hero.Lucio) && !IsDuplicatingHero(Hero.Lucio) 
         ? <"<0>", AbilityCooldown(player, Button.Ability1) != 0 
-            ? Round(AbilityCooldown(player, Button.Ability1)) < 10 
-                ? <"  <0>   ", Round(AbilityCooldown(player, Button.Ability1))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.Ability1))>
+            ? Ceiling(AbilityCooldown(player, Button.Ability1)) < 10 
+                ? <"  <0>   ", Ceiling(AbilityCooldown(player, Button.Ability1))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.Ability1))>
             : IsUsingAbility1()
                 ? "       "
                 : <"<0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability1)>> 
@@ -153,7 +142,7 @@ if (HasSpawned())
     // lucio ability 1
     IsHero(Hero.Lucio) || IsDuplicatingHero(Hero.Lucio)
         ? <"<0>", AbilityCooldown(player, Button.Ability1) != 0 
-            ? <"    <0>    ", Round(AbilityCooldown(player, Button.Ability1))> 
+            ? <"    <0>    ", Ceiling(AbilityCooldown(player, Button.Ability1))> 
             : IsUsingAbility1()
                 ? <"<0> > ", AbilityIconString(HeroOf(), Button.Ability1)>
                 : <"<0> + ", AbilityIconString(HeroOf(), Button.Ability1)>> 
@@ -171,9 +160,9 @@ if (HasSpawned())
     !ArrayContains(a2c_arr, HeroOf()) &&
     !ArrayContains(a2c_arr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Ability2) != 0 
-            ? Round(AbilityCooldown(player, Button.Ability2)) < 10 
-                ? <"   <0>   ", Round(AbilityCooldown(player, Button.Ability2))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.Ability2))>
+            ? Ceiling(AbilityCooldown(player, Button.Ability2)) < 10 
+                ? <"   <0>   ", Ceiling(AbilityCooldown(player, Button.Ability2))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.Ability2))>
             : IsUsingAbility2()
                 ? "        "
                 : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability2)>> 
@@ -183,57 +172,85 @@ if (HasSpawned())
     ArrayContains(sf_arr, HeroOf()) || 
     ArrayContains(sf_arr, HeroBeingDuplicated()) || 
     !IsDuplicating() && IsHero(Hero.Echo) 
-        ? <"<0>", AbilityCooldown(player, Button.SecondaryFire) != 0 
-            ? Round(AbilityCooldown(player, Button.SecondaryFire)) < 10 
-                ? <"   <0>   ", Round(AbilityCooldown(player, Button.SecondaryFire))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.SecondaryFire))>
+        ? AbilityCooldown(player, Button.SecondaryFire) != 0 
+            ? Ceiling(AbilityCooldown(player, Button.SecondaryFire)) < 10 
+                ? <"   <0>   ", Ceiling(AbilityCooldown(player, Button.SecondaryFire))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.SecondaryFire))>
             : IsFiringSecondary()
                 ? "        "
-                : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.SecondaryFire)>> 
+                : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.SecondaryFire)>
         : "",
 
     // secondary fire resources
     ArrayContains(sfr_arr, HeroOf()) || 
     ArrayContains(sfr_arr, HeroBeingDuplicated()) 
-        ? <"<0><1> ", AbilityIconString(IsDuplicating()
+        ? <" <0> <1> ", AbilityIconString(IsDuplicating()
                                             ? HeroBeingDuplicated() 
-                                            : HeroOf(), Button.SecondaryFire), Round(AbilityResource(player, Button.SecondaryFire))> 
+                                            : HeroOf(), Button.SecondaryFire), Near(AbilityResource(player, Button.SecondaryFire))> 
         : "",
 
     // primary fire
     ArrayContains(pf_arr, HeroOf()) || 
     ArrayContains(pf_arr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.PrimaryFire) != 0 
-            ? Round(AbilityCooldown(player, Button.PrimaryFire)) < 10 
-                ? <"   <0>   ", Round(AbilityCooldown(player, Button.PrimaryFire))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.PrimaryFire))>
+            ? Ceiling(AbilityCooldown(player, Button.PrimaryFire)) < 10 
+                ? <"   <0>   ", Ceiling(AbilityCooldown(player, Button.PrimaryFire))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.PrimaryFire))>
             : IsFiringPrimary() && IsFiringSecondary() // secondary condition for brig since she is the only one in the array 
                 ? "       "
                 : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.PrimaryFire)>> 
+        : "",
+
+    // primary fire resources
+    ArrayContains(pfr_arr, HeroOf()) || 
+    ArrayContains(pfr_arr, HeroBeingDuplicated()) 
+        ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+                                            ? HeroBeingDuplicated() 
+                                            : HeroOf(), Button.PrimaryFire), Near(AbilityResource(player, Button.PrimaryFire))> 
         : "",
 
     // jump
     ArrayContains(j_arr, HeroOf()) ||
     ArrayContains(j_arr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Jump) != 0 
-            ? Round(AbilityCooldown(player, Button.Jump)) < 10 
-                ? <"   <0>   ", Round(AbilityCooldown(player, Button.Jump))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.Jump))>
+            ? Ceiling(AbilityCooldown(player, Button.Jump)) < 10 
+                ? <"   <0>   ", Ceiling(AbilityCooldown(player, Button.Jump))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.Jump))>
             : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Jump)>>
+        : "",
+
+    // jump resources
+    ArrayContains(jr_arr, HeroOf()) || 
+    ArrayContains(jr_arr, HeroBeingDuplicated()) 
+        ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+                                            ? HeroBeingDuplicated() 
+                                            : HeroOf(), Button.Jump), Near(AbilityResource(player, Button.Jump))> 
         : "",
 
     // crouch
     ArrayContains(c_arr, HeroOf()) ||
     ArrayContains(c_arr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Crouch) != 0 
-            ? Round(AbilityCooldown(player, Button.Crouch)) < 10 
-                ? <"   <0>   ", Round(AbilityCooldown(player, Button.Crouch))> 
-                : <"  <0>  ", Round(AbilityCooldown(player, Button.Crouch))>
+            ? Ceiling(AbilityCooldown(player, Button.Crouch)) < 10 
+                ? <"   <0>   ", Ceiling(AbilityCooldown(player, Button.Crouch))> 
+                : <"  <0>  ", Ceiling(AbilityCooldown(player, Button.Crouch))>
             : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Crouch)>>
-        : "">, 
-    Text:           IsAlive() 
-                        ? <"<0> <1>", StringSlice(hp_arr[0], 0, (Near(Health() / 25))) + StringSlice(hp_arr[1], 0, (MaxHealth() / 25) - (Near(Health() / 25))), attacked ? IconString(Icon.Warning) : ""> 
-                        : "Dead",
+        : ""> 
+    : "DEAD",
+
+    Text: <"<3><0> <1><2>",
+            StringSlice(hp_arr[0], 0, Near(Health() / 25))
+          + StringSlice(hp_arr[1], Health() % 25 != 0 ? 0 : 1, (MaxHealth() / 25) - (Near(Health() / 25))), 
+
+            attacked 
+                ? IconString(Icon.Warning) 
+                : "",
+            cced 
+                ? IconString(Icon.Dizzy) 
+                : "",
+            IsDuplicating()
+                ? <"<0> ", AbilityIconString(Hero.Echo, Button.Ultimate)>
+                : "">,
     Location:       Location.Left, 
     SortOrder:      SlotOf() + 1, 
     HeaderColor:    (Health() > max_health) && !IsDuplicating()
@@ -244,6 +261,9 @@ if (HasSpawned())
     SubheaderColor: Color.White, 
     TextColor:      (Health() > max_health) && !IsDuplicating()
                         ? Color.Blue
-                        : health_color, 
+                        : IsAlive() 
+                            ? health_color
+                            : Color.Black, 
     Reevaluation:   HudTextRev.VisibleToSortOrderStringAndColor);
 }
+
