@@ -6,10 +6,10 @@ rule: "[IE] :: Aim & Movement"
 Event.OngoingPlayer
 if (bot_alive)
 {
-    StartThrottleInDirection(player, WorldVectorOf(ThrottleOf(owner), owner), ThrottleOf(owner) != Vector(0,0,0));
+    StartThrottleInDirection(player, WorldVectorOf(ThrottleOf(owner), owner), ThrottleOf(owner) != Vector());
 
     StartFacing(player, DirectionTowards(EyePosition(),
-    RayCastHitPosition(EyePosition(owner), EyePosition(owner) + Facing(owner) * 100, AllLivingPlayers(OppositeTeamOf(TeamOf(owner))), AllLivingPlayers(TeamOf(owner)), true)), 
+    RayCastHitPosition(EyePosition(owner), EyePosition(owner) + Facing(owner) * 100, AllLivingPlayers(OppositeTeamOf(TeamOf(owner))), AllPlayers(TeamOf(owner)), true)), 
     !cced ? 10000 : 0.001);
 }
 
@@ -38,37 +38,6 @@ if (Weapon() == 2)
 }
 
                     // button pressed //
-
-// rule: "[IE] :: Buttons"
-// Event.OngoingPlayer
-// if (!IsDummyBot())
-// if (IsTrueForAny(buttons, IsButtonHeld(player, Curr())))
-// if (IsAlive())
-// if (!is_rezzing)
-// {
-//     num count = CountOf(buttons);
-//     player[] bots = owner_bots;
-
-//     while (IsTrueForAny(buttons, IsButtonHeld(player, Curr())))
-//     {
-//         for (num i = 0; i < count; i++)
-//         {
-//             button = buttons[i];
-
-//             if (IsButtonHeld(player, button)) 
-//             {
-//                 StartHoldingButton(bots, button);
-//             }
-//             else
-//             {
-//                 StopHoldingButton(bots, button);
-//             }
-//         }
-
-//         Wait(0.125);
-//     }
-// }
-
 
 rule: "[IE] :: Pressed Primary"
 Event.OngoingPlayer
