@@ -51,12 +51,25 @@ disabled rule: "---------------- Debug ----------------"{}
 //     Kill(owner_bots);
 // }
 
-rule: "[DBG] :: Kill"
+// rule: "[DBG] :: Kill"
+// Event.OngoingPlayer
+// if (!IsDummyBot())
+// if (IsButtonHeld(player, Button.Interact))
+// {
+//     Kill();
+// }
+
+rule: "[DBG] :: Randomly damage all bots"
 Event.OngoingPlayer
 if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Interact))
 {
-    Kill();
+
+    for (Number i = 0; i < owner_bots.Length; i++)
+    {
+        Heal(owner_bots[i], null, 1000);
+        Damage(owner_bots[i], null, RandomReal(0, Health(owner_bots[i]) - 1));
+    }
 }
 
 // rule: "[DBG] :: Kill All"
@@ -91,16 +104,14 @@ if (IsButtonHeld(player, Button.Interact))
 //     Damage(player, player, 25);
 // }
 
-rule: "[DBG] :: Server Stats"
-{
-    CreateHudText(host, null, null, "Server Load", Location.Right, 21);
-    CreateHudText(host, null, "Cur", <"<0>%", Round(ServerLoad() / 2.55)>, Location.Right, 22, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
-    CreateHudText(host, null, "Avg", <"<0>%", Round(ServerLoadAverage() / 2.55)>, Location.Right, 23, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
-    CreateHudText(host, null, "Peak", <"<0>%", Round(ServerLoadPeak() / 2.55)>, Location.Right, 24, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
-    CreateHudText(host, null, null, "Entity/Text Count", Location.Right, 25);
-    CreateHudText(host, null, "Ent", EntityCount(), Location.Right, 26, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
-    CreateHudText(host, null, "Txt", TextCount() - 7, Location.Right, 27, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
-}
+// rule: "[DBG] :: Server Stats"
+// {
+//     CreateHudText(host, null, "Cur", <"<0>%", Near(ServerLoad() / 2.55)>, Location.Right, 22, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
+//     CreateHudText(host, null, "Avg", <"<0>%", Near(ServerLoadAverage() / 2.55)>, Location.Right, 23, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
+//     CreateHudText(host, null, "Peak", <"<0>%", Near(ServerLoadPeak() / 2.55)>, Location.Right, 24, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
+//     CreateHudText(host, null, "Ent", EntityCount(), Location.Right, 26, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
+//     CreateHudText(host, null, "Txt", TextCount() - 7, Location.Right, 27, Color.White, Color.White, Color.White, HudTextRev.VisibleToSortOrderStringAndColor);
+// }
 
 // rule: "[DBG] :: HUD"
 // Event.OngoingPlayer
