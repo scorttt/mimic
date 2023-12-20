@@ -1,0 +1,32 @@
+import "../../main.del";
+
+disabled rule: "---------------- Sombra ----------------"{}
+
+// rule: "[HS] :: Sombra Disable Ability 2"
+// Event.OngoingPlayer
+// player.Sombra
+// if (IsDummyBot())
+// {
+//     DisableAbility2();
+// }
+
+rule: "[HS] :: Sombra Unstealth Bots"
+Event.OngoingPlayer
+Player.Sombra
+if (!IsUsingAbility1(owner))
+if (IsUsingAbility1())
+{
+    PressButton(player, Button.Ability1);
+}
+
+// brute fucking force
+rule: "[HS] :: Sombra Stealth After Bot Spawns"
+Event.OngoingPlayer
+Player.Sombra
+if (bot_alive)
+if (IsUsingAbility1(owner))
+{
+    Wait(0.15);
+    PressButton(player, Button.Ability1);
+    LoopIf(!IsUsingAbility1());
+}

@@ -1,0 +1,84 @@
+{
+    "Lobby": {
+      "Allow Players Who Are In Queue": true,
+      "Map Rotation": "After A Game",
+      "Max Spectators": 4,
+      "Max Team 1 Players": 3,
+      "Max Team 2 Players": 3,
+      "Return To Lobby": "Never",
+      "Team Balancing": "After A Game"
+    },
+    "Modes": {
+      "All": {
+        "Competitive Rules": true,
+        "Game Mode Start": "Immediately",
+        "Hero Limit": "Off",
+        "Limit Roles": "2 Of Each Role Per Team",
+        "Respawn As Random Hero": true,
+        "Spawn Health Packs": "Enabled"
+      },
+      "Control": {
+        "Disabled Maps": ["Lijiang Tower Lunar New Year"]
+      },
+      "Escort": {
+        "Disabled Maps": ["Havana 0"]
+      },
+      "Hybrid": {
+        "Disabled Maps": ["Hollywood Halloween", "Eichenwalde Halloween", "King's Row Winter", "Blizzard World Winter", "Numbani"]
+      },
+      "Push": {}
+    },
+    "Heroes": {
+      "General": {
+          "General": {
+              "Ultimate Generation - Combat": 150.0
+          },
+        "Disabled Heroes": [
+          "D.va",
+          "Mercy"
+        ],
+        "Echo": {
+          "Damage Dealt": 50.0
+        },
+        "Lúcio": {
+          "Healing Dealt": 75.0
+        },
+        "Mei": {
+          "Weapon Freeze Rate Scalar": 50.0
+        },
+        "Moira": {
+          "Damage Dealt": 60.0,
+          "Healing Dealt": 70.0
+        },
+        "Symmetra": {
+          "Damage Dealt": 50.0
+        },
+        "Torbjörn": {
+          "Damage Dealt": 60.0
+        },
+        "Winston": {
+          "Barrier Projector Cooldown Time": 130.0,
+          "Damage Dealt": 50.0
+        },
+        "Ramattra": {
+          "Damage Dealt": 50.0
+        },
+        "Orisa": {
+          "Damage Dealt": 50.0
+        },
+        "Wrecking Ball": {
+          "Adaptive Shield Cooldown Time": 125.0
+        }
+      }
+    }, 
+    "Extensions": {
+        "Spawn More Dummy Bots": true,
+        "Play More Effects": true,
+        "Buff Status Effects": true,
+        "Debuff Status Effects": true,
+        "Buff and Debuff Sounds": true,
+        "Energy Explosion Effects": true,
+        "Beam Effects": true
+      },
+      "Description": ""
+  }

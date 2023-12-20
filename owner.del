@@ -1,0 +1,225 @@
+import "main.del";
+
+playervar Player owner; // player who owns a set of bots
+playervar Player[] owner_bots; // array of bots owned
+// playervar Player[] living_bots; // array of all living bots. todo: i technically dont even need this and can just check owner_bots with bot_alive
+playervar Boolean owner_alive; // whether the owner is alive
+playervar Boolean is_rezzing; // checks if the owner is replacing a bot
+playervar Any heal_ot; // heal over time for the owner
+playervar Number attack_timer; // attacked timer
+
+Player[] owned_bots: FilteredArray(AllyPlayers(), Curr().owner == player && IsDummyBot(Curr()) && EntityExists(Curr()));        // owner bots
+Player[] living_bots: FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && IsAlive() && Curr().owner == player);
+Player[] humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()));                                                             // all human players on a team
+Player[] spawned_humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()) && HasSpawned(Curr()));                               // all human players on a team that have spawned
+
+disabled rule: "---------------- Owner ----------------"{}
+
+rule: "[Owner] :: Create Bots"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (HasSpawned())
+if (IsAlive())
+if (owned_bots.Length < Floor((teamSize.Length - spawned_humans.Length) / humans.Length))
+{
+    // sets the slot for the bot to be created in if there is no entity present and no dummy bot exists at the end of the team_size. returns a number
+    botSlot = FilteredArray(teamSize, 
+                    !EntityExists(PlayersInSlot(Curr(), TeamOf())) || 
+                    (IsDummyBot(Curr()) && !EntityExists(Curr().owner))).First;
+
+    MinWait();
+
+    Vector position = (PositionOf() + Vector(0, 0.2, 0));
+    CreateDummyBot(HeroOf(), TeamOf(), botSlot, RayCastHitPosition(position, position + WorldVectorOf(Vector(0, 0, -1.0), player)), Facing()); // create the bot
+
+    Player temp = PlayersInSlot(botSlot, TeamOf());
+    temp.owner = player;
+
+    Wait(0.05);
+
+    LoopIfConditionIsTrue();
+
+    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
+}
+
+rule: "[Owner] :: Destroy Bots"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (owned_bots.Length > Floor((teamSize.Length - humans.Length) / humans.Length))
+{
+    DestroyDummyBot(TeamOf(), 
+                    LastOf(FilteredArray(teamSize, 
+                    IsDummyBot(PlayersInSlot(Curr(), TeamOf())) && PlayersInSlot(Curr(), TeamOf()).owner == player && EntityExists(PlayersInSlot(Curr(), TeamOf())))));
+
+    Wait(0.25);
+
+    LoopIfConditionIsTrue();
+
+    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
+}
+
+rule: "[Owner] :: Replace Healthiest Bot"
+Event.OnDeath
+if (!IsDummyBot())
+if (!EventWasEnvironment())
+if (IsTrueForAny(AllLivingPlayers(TeamOf()), Curr().owner == player && IsDummyBot(Curr())))
+{
+    Number[] ammo;
+    Player[] bots = owner_bots;
+    is_rezzing = true;
+    // Player new_player = FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player);
+    Player new_player = LastOf(SortedArray(FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
+    Vector position_of = PositionOf(new_player);
+    Vector facing = Facing(new_player);
+    Number health_of = Health(new_player);
+    ammo[0] = Ammo(new_player, 0);
+    ammo[1] = Ammo(new_player, 1);
+    Kill(new_player);
+    Teleport(player, position_of);
+    SetFacing(player, facing, Relative.ToWorld);
+    Resurrect();
+    MinWait();
+    SetPlayerHealth(player, health_of);
+    SetAmmo(player, 0, ammo[0]);
+    SetAmmo(player, 1, ammo[1]);
+    CancelPrimaryAction(bots);
+    is_rezzing = false;
+}
+
+rule: "[Owner] :: Alive"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (IsAlive())
+if (!is_rezzing)
+{
+    owner_alive = true;
+}
+
+rule: "[Owner] :: Dead"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (IsDead())
+if (!is_rezzing)
+{
+    owner_alive = false;
+
+    WaitUntil(owner_alive, 99999); // wait until the owner is alive
+    Respawn(owner_bots);
+    EnableRespawning(owner_bots);
+    EnableNameplates(owner_bots, All());
+}
+
+rule: "[Owner] :: Prevent Bot Spawning"
+Event.OngoingPlayer
+if (!owner_alive)
+{
+    DisableRespawning(owner_bots);
+    DisableNameplates(owner_bots, All()); // overwatch has a bug where if the players spawning is disabled and is dead their corpse will have a nameplate
+}
+
+// FilteredArray(AllDeadPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player)
+
+rule: "[Owner] :: Kill Bots if Owner falls off Map"
+Event.OnDeath
+if (!IsDummyBot()) 
+if (EventWasEnvironment())
+{
+    Kill(owner_bots, Attacker() != player ? Attacker() : null);
+}
+
+rule: "[Owner] :: Respawn Failsafe"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (IsDead())
+if (!is_rezzing)
+{
+    WaitIfTrue(S_RESPAWN_TIME + 1);
+    Respawn();
+}
+
+rule: "[Owner] :: Stun Status On"
+Event.OngoingPlayer
+if (HasStatus(owner, Status.Stunned))
+if (!HasStatus(player, Status.Stunned))
+{
+    AbortIf(IsUsingAbility1(owner) && IsHero(Hero.Mei));
+
+    SetStatus(player, null, Status.Stunned, 2.5);
+    Wait(0.064);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[Owner] :: Stun Status Off"
+Event.OngoingPlayer
+if (!HasStatus(owner, Status.Stunned))
+{
+    ClearStatus(player, Status.Stunned);
+}
+
+rule: "[Owner] :: Sleep Status On"
+Event.OngoingPlayer
+if (HasStatus(owner, Status.Asleep))
+if (!HasStatus(player, Status.Asleep))
+{
+    SetStatus(player, null, Status.Asleep, 5.5);
+    Wait(0.064);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[Owner] :: Sleep Status Off"
+Event.OngoingPlayer
+if (!HasStatus(owner, Status.Asleep))
+{
+    ClearStatus(player, Status.Asleep);
+}
+
+rule: "[Owner] :: Freeze Status On"
+Event.OngoingPlayer
+if (HasStatus(owner, Status.Frozen))
+if (!HasStatus(player, Status.Frozen))
+{
+    SetStatus(player, null, Status.Frozen, 7.35);
+    Wait(0.064);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[Owner] :: Freeze Status Off"
+Event.OngoingPlayer
+if (!HasStatus(owner, Status.Frozen))
+{
+    ClearStatus(player, Status.Frozen);
+}
+
+rule: "[Owner] :: Knockdown Status On"
+Event.OngoingPlayer
+if (HasStatus(owner, Status.KnockedDown))
+if (!HasStatus(player, Status.KnockedDown))
+{
+    SetStatus(player, null, Status.KnockedDown, 3);
+    Wait(0.064);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[Owner] :: Knockdown Status Off"
+Event.OngoingPlayer
+if (!HasStatus(owner, Status.KnockedDown))
+{
+    ClearStatus(player, Status.KnockedDown);
+}
+
+rule: "[Owner] :: Hack Status On"
+Event.OngoingPlayer
+if (HasStatus(owner, Status.Hacked))
+if (!HasStatus(player, Status.Hacked))
+{
+    SetStatus(player, null, Status.Hacked, 5.5);
+    Wait(0.064);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[Owner] :: Hack Status Off"
+Event.OngoingPlayer
+if (!HasStatus(owner, Status.Hacked))
+{
+    ClearStatus(player, Status.Hacked);
+}

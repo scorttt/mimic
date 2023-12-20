@@ -1,0 +1,12 @@
+import "../../main.del";
+
+disabled rule: "---------------- Reaper ----------------"{}
+
+rule: "[HS] :: Reaper Cancel TP"
+Event.OngoingPlayer
+Player.Reaper
+if (!IsDummyBot())
+if (!IsUsingAbility2())
+{
+    CancelPrimaryAction(living_bots);
+}

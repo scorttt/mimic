@@ -1,0 +1,12 @@
+import "../../main.del";
+
+disabled rule: "---------------- Illari ----------------"{}
+
+rule: "[HS] :: Illari Destroy Old Pylon"
+Event.OngoingPlayer
+Player.Illari
+if (bot_alive)
+if (IsInteractHeld(owner))
+{
+    PressButton(player, Button.Ability2);
+}

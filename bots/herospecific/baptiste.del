@@ -1,0 +1,13 @@
+import "../../main.del";
+
+disabled rule: "---------------- Baptiste ----------------"{}
+
+rule: "[HS] :: Baptiste Reload Fix"
+Event.OngoingPlayer
+Player.Baptiste
+if (IsDummyBot())
+if (Ammo(player, 0) == 0 || Ammo(player, 1) == 0)
+{
+    // why do i have to do this blizzard
+    PressButton(player, Button.Reload);
+}

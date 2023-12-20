@@ -1,0 +1,275 @@
+import "main.del";
+
+playervar Number kills; // amount of kills owner and bots have
+playervar Number deaths; // amount of deaths owner and bots have
+playervar Number damage_dealt; // amount of damage owner and bots have done
+playervar Number damage_taken; // amount of damage owner and bots have taken
+playervar Number heal_dealt; // amount of healing owner and bots have done
+playervar Number heal_taken; // amount of healing owner and bots have recieved
+
+Number percentage: (NormalizedHealth() * 100);
+Number r: (percentage <= 50) ? 255 : Floor(256 - (percentage - 50) * 5.12);
+Number g: (percentage >= 50) ? 255 : Floor(percentage * 5.12);
+Color health_color: CustomColor(r, g, 0, 255);
+
+// Color health_color: Colors.Gradient(new ComponentColor(Color.Red), new ComponentColor(Color.Green), NormalizedHealth());
+
+disabled rule: "---------------- HUD Text ----------------"{}
+
+rule: "[HUD] :: Init"
+{
+    // up to 1000hp, anything higher will not be shown
+    hpArr = [  "■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■",
+               "▣□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□□"];
+
+    s = "SsŚśŜŝŞşŠšƧƨȘșЅṠṡṢṣṤṥṦṧṨṩＳｓƵƶŹźŻżŽžẐẑẒẓẔẕΖＺｚǄǅǆǱǲǳ";
+}
+
+// rule: "[HUD] :: Kills"
+// Event.OnFinalBlow
+// {
+//     (owner == null ? player : owner).kills++;
+// }
+
+// rule: "[HUD] :: Update Deaths"
+// Event.OnDeath
+// if (!is_rezzing)
+// {
+//     (owner == null ? player : owner).deaths++;
+// }
+
+// rule: "[HUD] :: Update Damage Dealt"
+// Event.OnDamageDealt
+// if (Victim() != player)
+// if (EventDamage() > 0)
+// {
+//     (owner == null ? player : owner).damage_dealt += Near(EventDamage());
+// }
+
+// rule: "[HUD] :: Update Damage Recieved"
+// Event.OnDamageTaken
+// if (Attacker() != player)
+// if (EventDamage() > 0)
+// {
+//     (owner == null ? player : owner).damage_taken += Near(EventDamage());
+// }
+
+// rule: "[HUD] :: Update Heal Dealt"
+// Event.OnHealingDealt
+// if (Healee() != player)
+// if (EventHealing() > 0)
+// {
+//     (owner == null ? player : owner).heal_dealt += Near(EventHealing());
+// }
+
+// rule: "[HUD] :: Update Heal Recieved"
+// Event.OnHealingTaken
+// if (Healer() != player)
+// if (EventHealing() > 0)
+// {
+//     (owner == null ? player : owner).heal_taken += Near(EventHealing());
+// }
+
+rule: "[HUD] :: Bot Under Attack"
+Event.OnDamageTaken
+if (IsDummyBot())
+{
+    attacked = true;
+    attack_timer = S_TIMER_DUR;
+    StopChasingVariable(attack_timer);
+    ChaseVariableAtRate(attack_timer, 0, 1, RateChaseReevaluation.None);
+}
+
+rule: "[HUD] :: Bot Attack Timer End"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (attack_timer == 0)
+{
+    attacked = false;
+}
+
+// rule: "[HUD] :: Stats"
+// Event.OngoingPlayer
+// if (!IsDummyBot())
+// {
+//     CreateHudText(player, null,
+//     <" \n<0><1><2><3><4><5>",
+//     <"Kills: <0>\n", kills>, 
+//     <"Deaths: <0>\n", deaths>, 
+//     <"Damage Out: <0>\n", damage_dealt>, 
+//     <"Damage In: <0>\n", damage_taken>, 
+//     heal_dealt != 0 ? <"Healing Out: <0>\n", heal_dealt> : "", 
+//     heal_taken != 0 ? <"Healing In: <0>\n", heal_taken> : "">, 
+//     null, 
+//     Location.Left, 30, Color.White, Color.White, Color.White);
+// }
+
+rule: "[HUD] :: Bot Stats"
+Event.OngoingPlayer
+if (IsDummyBot())
+if (HasSpawned())
+{
+    // MaxHealth() updates dynamically
+    max_health = MaxHealth();
+
+    CreateHudText(owner, 
+    Header:         !IsDuplicating() ? HeroIconString(HeroOf()) : HeroIconString(HeroBeingDuplicated()),
+    Subheader:      IsAlive() ? <"<0><1><2><3><4><5><6><7><8><9><12><10><11><13>",
+    // ability 1 charges
+    ArrayContains(a1cArr, HeroOf()) || 
+    ArrayContains(a1cArr, HeroBeingDuplicated()) 
+        ? AbilityCharge(player, Button.Ability1) > 0 
+            ? <"<0><1> ", AbilityIconString(IsDuplicating() 
+                                                ? HeroBeingDuplicated() 
+                                                : HeroOf(), Button.Ability1), AbilityCharge(player, Button.Ability1)> 
+            : "         "
+        : "",
+
+    // ability 1
+    !ArrayContains(a1cArr, HeroOf()) && 
+    !ArrayContains(a1cArr, HeroBeingDuplicated()) && 
+    !IsHero(Hero.Lucio) 
+        ? <"<0>", AbilityCooldown(player, Button.Ability1) != 0 
+            ? Ceil(AbilityCooldown(player, Button.Ability1)) < 10 
+                ? <"  <0>   ", Ceil(AbilityCooldown(player, Button.Ability1))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.Ability1))>
+            : IsUsingAbility1()
+                ? "       "
+                : <"<0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability1)>> 
+        : "",
+
+    // lucio ability 1
+    IsHero(Hero.Lucio)
+        ? <"<0>", AbilityCooldown(player, Button.Ability1) != 0 
+            ? <"    <0>    ", Ceil(AbilityCooldown(player, Button.Ability1))> 
+            : IsUsingAbility1()
+                ? <"<0> > ", AbilityIconString(HeroOf(), Button.Ability1)>
+                : <"<0> + ", AbilityIconString(HeroOf(), Button.Ability1)>> 
+        : "",
+
+    // ability 2 charges
+    ArrayContains(a2cArr, HeroOf()) || 
+    ArrayContains(a2cArr, HeroBeingDuplicated()) 
+        ? AbilityCharge(player, Button.Ability2) > 0 
+            ? <" <0><1> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability2), AbilityCharge(player, Button.Ability2)> 
+            : "          "
+        : "",
+
+    // ability 2
+    !ArrayContains(a2cArr, HeroOf()) &&
+    !ArrayContains(a2cArr, HeroBeingDuplicated()) 
+        ? <"<0>", AbilityCooldown(player, Button.Ability2) != 0 
+            ? Ceil(AbilityCooldown(player, Button.Ability2)) < 10 
+                ? <"   <0>   ", Ceil(AbilityCooldown(player, Button.Ability2))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.Ability2))>
+            : IsUsingAbility2()
+                ? "        "
+                : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability2)>> 
+        : "",
+
+    // secondary fire
+    ArrayContains(sfArr, HeroOf()) || 
+    ArrayContains(sfArr, HeroBeingDuplicated()) || 
+    !IsDuplicating() && IsHero(Hero.Echo) 
+        ? AbilityCooldown(player, Button.SecondaryFire) != 0 
+            ? Ceil(AbilityCooldown(player, Button.SecondaryFire)) < 10 
+                ? <"   <0>   ", Ceil(AbilityCooldown(player, Button.SecondaryFire))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.SecondaryFire))>
+            : IsFiringSecondary()
+                ? "        "
+                : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.SecondaryFire)>
+        : "",
+
+    // // secondary fire resources
+    // ArrayContains(sfrArr, HeroOf()) || 
+    // ArrayContains(sfrArr, HeroBeingDuplicated()) 
+    //     ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+    //                                         ? HeroBeingDuplicated() 
+    //                                         : HeroOf(), Button.SecondaryFire), Near(AbilityResource(player, Button.SecondaryFire))> 
+    //     : "",
+
+    // primary fire
+    ArrayContains(pfArr, HeroOf()) || 
+    ArrayContains(pfArr, HeroBeingDuplicated()) 
+        ? <"<0>", AbilityCooldown(player, Button.PrimaryFire) != 0 
+            ? Ceil(AbilityCooldown(player, Button.PrimaryFire)) < 10 
+                ? <"   <0>   ", Ceil(AbilityCooldown(player, Button.PrimaryFire))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.PrimaryFire))>
+            : IsFiringPrimary() && IsFiringSecondary() // secondary condition for brig since she is the only one in the array 
+                ? "       "
+                : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.PrimaryFire)>> 
+        : "",
+
+    // primary fire resources
+    ArrayContains(pfrArr, HeroOf()) || 
+    ArrayContains(pfrArr, HeroBeingDuplicated()) 
+        ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+                                            ? HeroBeingDuplicated() 
+                                            : HeroOf(), Button.PrimaryFire), Near(AbilityResource(player, Button.PrimaryFire))> 
+        : "",
+
+    // jump
+    ArrayContains(jArr, HeroOf()) ||
+    ArrayContains(jArr, HeroBeingDuplicated()) 
+        ? <"<0>", AbilityCooldown(player, Button.Jump) != 0 
+            ? Ceil(AbilityCooldown(player, Button.Jump)) < 10 
+                ? <"   <0>   ", Ceil(AbilityCooldown(player, Button.Jump))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.Jump))>
+            : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Jump)>>
+        : "",
+
+    // // jump resources
+    // ArrayContains(jrArr, HeroOf()) || 
+    // ArrayContains(jrArr, HeroBeingDuplicated()) 
+    //     ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+    //                                         ? HeroBeingDuplicated() 
+    //                                         : HeroOf(), Button.Jump), Near(AbilityResource(player, Button.Jump))> 
+    //     : "",
+
+    // crouch
+    ArrayContains(cArr, HeroOf()) ||
+    ArrayContains(cArr, HeroBeingDuplicated()) 
+        ? <"<0>", AbilityCooldown(player, Button.Crouch) != 0 
+            ? Ceil(AbilityCooldown(player, Button.Crouch)) < 10 
+                ? <"   <0>   ", Ceil(AbilityCooldown(player, Button.Crouch))> 
+                : <"  <0>  ", Ceil(AbilityCooldown(player, Button.Crouch))>
+            : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Crouch)>>
+        : "",
+        
+    // statuses
+    attacked 
+        ? IconString(Icon.Warning) 
+        : "",
+    cced 
+        ? IconString(Icon.Dizzy) 
+        : "",
+
+    // status brackets
+    cced || attacked ? "【 " : "", 
+    cced || attacked ? " 】" : ""> 
+
+    : "DEAD",
+
+    Text:   <"<1><0>", 
+            StringSlice(hpArr[0], 0, Floor(Health() / 25))
+          + StringSlice(hpArr[1], Health() % 25 != 0 ? 0 : 1, (MaxHealth() / 25) - (Floor(Health() / 25))),
+
+          IsDuplicating()
+            ? <"<0>  ", AbilityIconString(Hero.Echo, Button.Ultimate)>
+            : "">,
+    Location:       Location.Left, 
+    SortOrder:      SlotOf() + 1, 
+    HeaderColor:    (Health() > max_health) && !IsDuplicating()
+                        ? Color.Blue
+                        : IsAlive() 
+                            ? health_color
+                            : Color.Black, 
+    SubheaderColor: Color.White, 
+    TextColor:      (Health() > max_health) && !IsDuplicating()
+                        ? Color.Blue
+                        : IsAlive() 
+                            ? health_color
+                            : Color.Black, 
+    Reevaluation:   HudTextRev.VisibleToSortOrderStringAndColor);
+}
+

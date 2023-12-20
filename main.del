@@ -1,0 +1,146 @@
+import "../macros-ostw/main.del";
+// import "clonesv2lobby.json";
+import "clonesv2lobbydbg.json";
+import "debug.del";
+
+import "owner.del";
+import "hud.del";
+import "bots/bots.del";
+import "bots/input.del";
+
+import "bots/herospecific/baptiste.del";
+import "bots/herospecific/bastion.del";
+import "bots/herospecific/echo.del";
+import "bots/herospecific/genji.del";
+import "bots/herospecific/mei.del";
+import "bots/herospecific/reaper.del";
+import "bots/herospecific/sombra.del";
+import "bots/herospecific/illari.del";
+
+globalvar Number S_DISTANCE; // maximum distance until bot teleports to owner
+globalvar Number S_OOS_TIME; // out of los time before teleport
+globalvar Number S_TIMER_DUR; // duration of the combat timer
+globalvar Number S_RESPAWN_TIME; // respawn time
+// globalvar Number FAILSAFE_TIME; // respawn failsafe time
+globalvar Number S_TEAM_SIZE;
+globalvar Number S_GENJI_DAMAGE;
+globalvar Boolean s_genji_nerf; // bool genji nerf
+// globalvar Boolean s_heal_toggle; // bool heal over time
+globalvar Boolean s_echo_effect;
+
+playervar Any genjiAo; // genji damage modification
+playervar Boolean cced; // bool for cc status is applied
+playervar Number botSlot; // slot of player to create bots for
+globalvar Number[] teamSize; // amount of slots per team
+
+globalvar Hero[] pfArr;
+globalvar Hero[] sfArr;
+globalvar Hero[] pfrArr;
+globalvar Hero[] sfrArr;
+globalvar Hero[] a1Arr;
+globalvar Hero[] a1cArr;
+globalvar Hero[] a2Arr;
+globalvar Hero[] a2cArr;
+globalvar Hero[] jArr;
+globalvar Hero[] jrArr;
+globalvar Hero[] cArr;
+globalvar Hero[] weapArr;
+globalvar String[] hpArr;
+globalvar String s;
+
+disabled rule: "---------------- All ----------------"{}
+
+rule: "Initial Global"
+{
+    DisableInspectorRecording();
+
+    pfArr = [Hero.Brigitte]; // primary fire
+    sfArr = [Hero.Orisa, Hero.Reinhardt, Hero.Sigma, Hero.WreckingBall, Hero.Doomfist, Hero.Sombra, Hero.Soldier76, Hero.Brigitte, Hero.Lucio, Hero.JunkerQueen, Hero.Ramattra, Hero.Bastion]; // secondary fire
+    pfrArr = [Hero.Moira]; // primary fire resources
+    sfrArr = [Hero.Dva]; // secondary fire resources
+    a1cArr = [Hero.Tracer, Hero.Symmetra, Hero.Junkrat]; // ability 1 charges
+    // a2Arr = [Hero.Brigitte]; // uses charges instead
+    a2cArr = [Hero.Brigitte]; // ability 2 charges
+    jArr = [Hero.Hanzo, Hero.Lifeweaver]; // jump
+    // jrArr = [Hero.Pharah]; // jump resources
+    cArr = [Hero.WreckingBall]; // crouch
+    // buttons = [Button.PrimaryFire, Button.SecondaryFire, Button.Ability1, Button.Ability2, Button.Melee, Button.Crouch, Button.Interact, Button.Jump, Button.Reload, Button.Ultimate];
+
+    S_TEAM_SIZE = WorkshopSettingCombo("General", "Team Size (6v6 and greater will affect performance!) (6v6)", 4, 
+    ["2v2 (One Human Player Max)", "3v3 (One Human Player Max)", "4v4 (Two Human Players Max)", "5v5", "6v6", "7v7", "8v8", "9v9", "10v10", "11v11", "12v12"], 1);
+
+    for (Number i = 1; i < S_TEAM_SIZE + 2; i++)
+        teamSize += i;
+
+    S_TIMER_DUR = WorkshopSettingReal("General", "In Combat Timer (6)", 6, 0, 30, 2);
+    S_RESPAWN_TIME = WorkshopSettingInteger("General", "Bot Respawn Time (15)", 15, 0, 90, 3);
+    // s_heal_toggle = WorkshopSettingToggle("General", "Heal Over Time out of combat (On)", true, 4);
+    s_echo_effect = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
+
+    S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (20)", 20, 0, 100, 1);
+    S_OOS_TIME = WorkshopSettingReal("Teleport", "Out of LOS Teleport Time (0.25)", 0.25, 0.016, 5, 2);
+
+    s_genji_nerf = WorkshopSettingToggle("Genji", "Genji Ability 1 Damage Modification (On)", true, 1);
+    S_GENJI_DAMAGE = WorkshopSettingReal("Genji", "Genji Ability 1 Damage Percentage (33.34)", 33.34, 0, 100, 2);
+
+}
+
+rule: "[All] :: Player Init"
+Event.OngoingPlayer
+{
+    StartScalingBarriers(player, 0.58);
+}
+
+rule: "[All] :: Human Init"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (HasSpawned())
+{
+    owner_alive = true;
+}
+
+rule: "[All] :: Assembling Heroes Time"
+if (IsAssemblingHeroes())
+{
+    SetMatchTime(10);
+}
+
+rule: "[All] :: cced"
+Event.OngoingPlayer
+if (HasStatus(player, Status.Asleep) || 
+    HasStatus(player, Status.Frozen) || 
+    HasStatus(player, Status.KnockedDown) || 
+    HasStatus(player, Status.Rooted) || 
+    HasStatus(player, Status.Stunned))
+{
+    cced = true;
+}
+
+rule: "[All] :: Not cced"
+Event.OngoingPlayer
+if (!HasStatus(player, Status.Asleep) && 
+    !HasStatus(player, Status.Frozen) && 
+    !HasStatus(player, Status.KnockedDown) && 
+    !HasStatus(player, Status.Rooted) && 
+    !HasStatus(player, Status.Stunned))
+{
+    cced = false;
+}
+
+rule: "[All] :: CC Failsafe" // this is needed because of weird interactions with dva de-mech and mei ice block
+Event.OngoingPlayer
+if (cced)
+{
+    WaitIfTrue(8);
+    cced = false;
+}
+
+rule: "[All] :: Collected Healthpack"
+Event.OnHealingTaken
+if (EventWasHealthPack())
+{
+    if (IsDummyBot())
+        Heal(owner, player, EventHealing());
+    else 
+        Heal(FilteredArray(AllLivingPlayers(), Curr().owner == player), player, EventHealing());
+}
