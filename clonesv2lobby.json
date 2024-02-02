@@ -14,8 +14,8 @@
         "Game Mode Start": "Immediately",
         "Hero Limit": "Off",
         "Limit Roles": "2 Of Each Role Per Team",
-        "Respawn As Random Hero": true,
-        "Spawn Health Packs": "Enabled"
+        "Spawn Health Packs": "Enabled",
+        "Allow Hero Switching": false
       },
       "Control": {
         "Disabled Maps": ["Lijiang Tower Lunar New Year"]

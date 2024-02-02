@@ -12,6 +12,10 @@ Number r: (percentage <= 50) ? 255 : Floor(256 - (percentage - 50) * 5.12);
 Number g: (percentage >= 50) ? 255 : Floor(percentage * 5.12);
 Color health_color: CustomColor(r, g, 0, 255);
 
+Vector MenuYFromMenuZ(Vector z): DirectionFromAngles(HorizontalAngleFromDirection(z), VerticalAngleFromDirection(z) - 90);
+Any RenderPosOf(Number x = 0, Number y = 0): 
+    Update(EyePos(local) + 100 * (x * Cross(Facing(local), MenuYFromMenuZ(Facing(local))) + y * MenuYFromMenuZ(Facing(local)) + 3 * Facing(local)));
+
 // Color health_color: Colors.Gradient(new ComponentColor(Color.Red), new ComponentColor(Color.Green), NormalizedHealth());
 
 disabled rule: "---------------- HUD Text ----------------"{}
@@ -25,50 +29,31 @@ rule: "[HUD] :: Init"
     s = "SsŚśŜŝŞşŠšƧƨȘșЅṠṡṢṣṤṥṦṧṨṩＳｓƵƶŹźŻżŽžẐẑẒẓẔẕΖＺｚǄǅǆǱǲǳ";
 }
 
-// rule: "[HUD] :: Kills"
-// Event.OnFinalBlow
-// {
-//     (owner == null ? player : owner).kills++;
-// }
+Number rerollPerc: (local.rerollTimer / S_REROLL_TIME);
+rule: "[HUD] :: Hero Reroll Timer"
+{
+    CreateInWorldText(
+        VisibleTo: local.canReroll && IsInSpawnRoom(local) ? local : null, 
+        Header: <"Reroll Hero: [<0>]", BindString(Button.Interact)>, 
+        Position: RenderPosOf(0, -0.9), 
+        Scale: 1.5, 
+        Clipping: Clipping.DoNotClip);
 
-// rule: "[HUD] :: Update Deaths"
-// Event.OnDeath
-// if (!is_rezzing)
-// {
-//     (owner == null ? player : owner).deaths++;
-// }
-
-// rule: "[HUD] :: Update Damage Dealt"
-// Event.OnDamageDealt
-// if (Victim() != player)
-// if (EventDamage() > 0)
-// {
-//     (owner == null ? player : owner).damage_dealt += Near(EventDamage());
-// }
-
-// rule: "[HUD] :: Update Damage Recieved"
-// Event.OnDamageTaken
-// if (Attacker() != player)
-// if (EventDamage() > 0)
-// {
-//     (owner == null ? player : owner).damage_taken += Near(EventDamage());
-// }
-
-// rule: "[HUD] :: Update Heal Dealt"
-// Event.OnHealingDealt
-// if (Healee() != player)
-// if (EventHealing() > 0)
-// {
-//     (owner == null ? player : owner).heal_dealt += Near(EventHealing());
-// }
-
-// rule: "[HUD] :: Update Heal Recieved"
-// Event.OnHealingTaken
-// if (Healer() != player)
-// if (EventHealing() > 0)
-// {
-//     (owner == null ? player : owner).heal_taken += Near(EventHealing());
-// }
+    CreateProgressBarInWorldText(
+        VisibleTo: local.rerollTimer < S_REROLL_TIME && local.canReroll && IsInSpawnRoom(local) ? local : null, 
+        Value: rerollPerc * 100, 
+        Text: "",
+        Position: RenderPosOf(0, -1.2),
+        Scale: 0.75,
+        Clipping: Clipping.DoNotClip,
+        ProgressBarColor: CustomColor(
+            255, 
+            Lerp(0, 255, rerollPerc), 
+            0, 
+            255), 
+        Reevaluation: ProgressBarWorldEvaluation.VisibleToPositionValuesAndColor
+        );
+}
 
 rule: "[HUD] :: Bot Under Attack"
 Event.OnDamageTaken

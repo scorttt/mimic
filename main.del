@@ -1,6 +1,6 @@
 import "../macros-ostw/main.del";
-// import "clonesv2lobby.json";
-import "clonesv2lobbydbg.json";
+import "clonesv2lobby.json";
+// import "clonesv2lobbydbg.json";
 import "debug.del";
 
 import "owner.del";
@@ -57,12 +57,12 @@ rule: "Initial Global"
     pfArr = [Hero.Brigitte]; // primary fire
     sfArr = [Hero.Orisa, Hero.Reinhardt, Hero.Sigma, Hero.WreckingBall, Hero.Doomfist, Hero.Sombra, Hero.Soldier76, Hero.Brigitte, Hero.Lucio, Hero.JunkerQueen, Hero.Ramattra, Hero.Bastion]; // secondary fire
     pfrArr = [Hero.Moira]; // primary fire resources
-    sfrArr = [Hero.Dva]; // secondary fire resources
+    sfrArr = [Hero.Dva, Hero.Roadhog]; // secondary fire resources
     a1cArr = [Hero.Tracer, Hero.Symmetra, Hero.Junkrat]; // ability 1 charges
     // a2Arr = [Hero.Brigitte]; // uses charges instead
     a2cArr = [Hero.Brigitte]; // ability 2 charges
     jArr = [Hero.Hanzo, Hero.Lifeweaver]; // jump
-    // jrArr = [Hero.Pharah]; // jump resources
+    // jrArr = [Hero.Pharah]; // jump resources (too laggy)
     cArr = [Hero.WreckingBall]; // crouch
     // buttons = [Button.PrimaryFire, Button.SecondaryFire, Button.Ability1, Button.Ability2, Button.Melee, Button.Crouch, Button.Interact, Button.Jump, Button.Reload, Button.Ultimate];
 
@@ -76,6 +76,9 @@ rule: "Initial Global"
     S_RESPAWN_TIME = WorkshopSettingInteger("General", "Bot Respawn Time (15)", 15, 0, 90, 3);
     // s_heal_toggle = WorkshopSettingToggle("General", "Heal Over Time out of combat (On)", true, 4);
     s_echo_effect = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
+
+    S_RANDOM_HERO = WorkshopSettingToggle("Random", "Random Hero (On)", true, 0);
+    S_REROLL_TIME = WorkshopSettingReal("Random", "Random Hero Reroll Time (20)", 20, 0, 60, 1);
 
     S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (20)", 20, 0, 100, 1);
     S_OOS_TIME = WorkshopSettingReal("Teleport", "Out of LOS Teleport Time (0.25)", 0.25, 0.016, 5, 2);
@@ -102,7 +105,7 @@ if (HasSpawned())
 rule: "[All] :: Assembling Heroes Time"
 if (IsAssemblingHeroes())
 {
-    SetMatchTime(10);
+    SetMatchTime(1);
 }
 
 rule: "[All] :: cced"
@@ -143,4 +146,87 @@ if (EventWasHealthPack())
         Heal(owner, player, EventHealing());
     else 
         Heal(FilteredArray(AllLivingPlayers(), Curr().owner == player), player, EventHealing());
+}
+
+
+playervar Boolean canReroll;
+playervar Boolean rerolled;
+playervar Boolean randomized;
+playervar Number rerollTimer;
+globalvar Number S_REROLL_TIME;
+globalvar Boolean S_RANDOM_HERO;
+
+void SetRandomHero(Player player = player) playervar "Set Random hero" 
+{
+    Hero prevHero! = HeroOf();
+    Hero[] heroArr! = AllowedHeroes() - prevHero;
+
+    ForcePlayerHero(player, heroArr.Random());
+    StopForcingHero();
+
+    heroArr = AllHeroes() + prevHero;
+    randomized = true;
+}
+
+rule: "[All] :: Automatically Force Hero"
+Event.OngoingPlayer
+if (S_RANDOM_HERO)
+if (!HasSpawned())
+{
+    SetRandomHero();
+
+    Wait(1);
+    LoopIfConditionIsTrue();
+}
+
+rule: "[All] :: Can Hero Reroll"
+Event.OngoingPlayer
+if (S_RANDOM_HERO)
+if (!IsDummyBot())
+if (IsInSpawnRoom())
+if (IsAlive())
+if (HasSpawned())
+if (!rerolled)
+{
+    if (!randomized)
+        SetRandomHero();
+
+    canReroll = true;
+}
+
+rule: "[All] :: Hero Reroll"
+Event.OngoingPlayer
+if (IsInSpawnRoom())
+if (IsInteractHeld())
+if (!IsDummyBot())
+if (canReroll)
+{
+    SetRandomHero();
+
+    canReroll = false;
+    rerolled = true;
+}
+
+rule: "[All] :: Hero Reroll Timer"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (IsAlive())
+if (canReroll)
+{
+    StopChasingVariable(rerollTimer);
+    rerollTimer = S_REROLL_TIME;
+
+    WaitUntil(ThrottleOf() != Vector(), 99999);
+
+    ChaseVariableOverTime(rerollTimer, 0, S_REROLL_TIME, TimeChaseReevaluation.DestinationAndDuration);
+}
+
+rule: "[All] :: Hero Reroll Expired"
+Event.OngoingPlayer
+if (!IsDummyBot())
+if (canReroll)
+if (rerollTimer == 0 || IsDead())
+{
+    canReroll = false;
+    rerolled = true; // the player technically didnt reroll but whatever
 }

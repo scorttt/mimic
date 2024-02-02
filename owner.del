@@ -102,6 +102,8 @@ if (IsDead())
 if (!is_rezzing)
 {
     owner_alive = false;
+    rerolled = false;
+    randomized = false;
 
     WaitUntil(owner_alive, 99999); // wait until the owner is alive
     Respawn(owner_bots);
