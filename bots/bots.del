@@ -122,7 +122,8 @@ if (UltimateChargePercent(owner) != 100)
 //     SetUltimateCharge(player, 0);
 // }
 
-void TeleportBot() playervar "Teleport Sub"
+
+void TeleportBotFallback() playervar "Teleport Fallback Sub"
 {
     // Teleport(player, PositionOf(owner) + WorldVectorOf(Vector(0, 0, -0.5), owner));
 
@@ -136,25 +137,34 @@ void TeleportBot() playervar "Teleport Sub"
     PlayEffect(All(), PlayEffect.TracerRecallReappearEffect, Color.White, player);
 }
 
+
 rule: "[Bot] :: Owner out of range"
 Event.OngoingPlayer
-if (bot_alive)
+if (isBotAlive)
 if (IsAlive(owner))
 if (!cced)
-if (DistanceBetween(owner, player) > S_DISTANCE)
+if (DistanceBetween(PosOf(owner), PosOf()) > S_DISTANCE || !IsInLineOfSight(owner, player))
 {
-    TeleportBot();
+    SetGravity(player, 0);
+    DisableMovementCollisionWithEnvironment(player, true);
+
+    while (IsAlive() && (DistanceBetween(PosOf(owner), PosOf()) > 1 || !IsInLineOfSight(owner, player)))
+    {
+        ApplyImpulse(player, DirectionTowards(player, owner), 10, Relative.ToWorld, ContraryMotion.Cancel);
+        Wait(0.1);
+    }
+
+    StopAllMomentum();
+    SetGravity(player, 100);
+    EnableMovementCollisionWithEnvironment(player);
 }
 
-rule: "[Bot] :: Owner out of sight"
+rule: "[Bot] :: Teleport bot fallback"
 Event.OngoingPlayer
-if (bot_alive)
+if (isBotAlive)
 if (IsAlive(owner))
-if (!cced)
-if (!IsInLineOfSight(owner, player))
+if (DistanceBetween(PosOf(owner), PosOf()) > S_DISTANCE || !IsInLineOfSight(owner, player))
+if (!IsInSpawnRoom(owner) && IsInSpawnRoom())
 {
-    if (!IsInSpawnRoom())
-        WaitIfTrue(S_OOS_TIME);
-
-    TeleportBot();
+    TeleportBotFallback();
 }
