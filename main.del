@@ -24,9 +24,8 @@ globalvar Number S_RESPAWN_TIME; // respawn time
 // globalvar Number FAILSAFE_TIME; // respawn failsafe time
 globalvar Number S_TEAM_SIZE;
 globalvar Number S_GENJI_DAMAGE;
-globalvar Boolean s_genji_nerf; // bool genji nerf
-// globalvar Boolean s_heal_toggle; // bool heal over time
-globalvar Boolean s_echo_effect;
+globalvar Boolean S_NERF_GENJI; // bool genji nerf
+globalvar Boolean S_ECHO_EFFECT;
 
 playervar Any genjiAo; // genji damage modification
 playervar Boolean cced; // bool for cc status is applied
@@ -75,23 +74,17 @@ rule: "Initial Global"
     S_TIMER_DUR = WorkshopSettingReal("General", "In Combat Timer (6)", 6, 0, 30, 2);
     S_RESPAWN_TIME = WorkshopSettingInteger("General", "Bot Respawn Time (15)", 15, 0, 90, 3);
     // s_heal_toggle = WorkshopSettingToggle("General", "Heal Over Time out of combat (On)", true, 4);
-    s_echo_effect = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
+    S_ECHO_EFFECT = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
 
     S_RANDOM_HERO = WorkshopSettingToggle("Random", "Random Hero (On)", true, 0);
     S_REROLL_TIME = WorkshopSettingReal("Random", "Random Hero Reroll Time (20)", 20, 0, 60, 1);
 
-    S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (20)", 20, 0, 100, 1);
+    S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (12)", 12, 0, 100, 1);
     S_OOS_TIME = WorkshopSettingReal("Teleport", "Out of LOS Teleport Time (0.25)", 0.25, 0.016, 5, 2);
 
-    s_genji_nerf = WorkshopSettingToggle("Genji", "Genji Ability 1 Damage Modification (On)", true, 1);
+    S_NERF_GENJI = WorkshopSettingToggle("Genji", "Genji Ability 1 Damage Modification (On)", true, 1);
     S_GENJI_DAMAGE = WorkshopSettingReal("Genji", "Genji Ability 1 Damage Percentage (33.34)", 33.34, 0, 100, 2);
 
-}
-
-rule: "[All] :: Player Init"
-Event.OngoingPlayer
-{
-    StartScalingBarriers(player, 0.58);
 }
 
 rule: "[All] :: Human Init"
@@ -99,13 +92,16 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (HasSpawned())
 {
-    owner_alive = true;
+    isOwnerAlive = true;
 }
 
 rule: "[All] :: Assembling Heroes Time"
 if (IsAssemblingHeroes())
 {
-    SetMatchTime(1);
+    if (S_RANDOM_HERO) 
+        SetMatchTime(1);
+    else 
+        SetMatchTime(10);
 }
 
 rule: "[All] :: cced"
@@ -150,9 +146,9 @@ if (EventWasHealthPack())
 
 
 playervar Boolean canReroll;
-playervar Boolean rerolled;
-playervar Boolean randomized;
-playervar Number rerollTimer;
+playervar Boolean heroRerolled;
+playervar Boolean heroRandomized;
+playervar Number heroRerollTimer;
 globalvar Number S_REROLL_TIME;
 globalvar Boolean S_RANDOM_HERO;
 
@@ -165,7 +161,7 @@ void SetRandomHero(Player player = player) playervar "Set Random hero"
     StopForcingHero();
 
     heroArr = AllHeroes() + prevHero;
-    randomized = true;
+    heroRandomized = true;
 }
 
 rule: "[All] :: Automatically Force Hero"
@@ -186,9 +182,9 @@ if (!IsDummyBot())
 if (IsInSpawnRoom())
 if (IsAlive())
 if (HasSpawned())
-if (!rerolled)
+if (!heroRerolled)
 {
-    if (!randomized)
+    if (!heroRandomized)
         SetRandomHero();
 
     canReroll = true;
@@ -204,7 +200,7 @@ if (canReroll)
     SetRandomHero();
 
     canReroll = false;
-    rerolled = true;
+    heroRerolled = true;
 }
 
 rule: "[All] :: Hero Reroll Timer"
@@ -213,20 +209,31 @@ if (!IsDummyBot())
 if (IsAlive())
 if (canReroll)
 {
-    StopChasingVariable(rerollTimer);
-    rerollTimer = S_REROLL_TIME;
+    StopChasingVariable(heroRerollTimer);
+    heroRerollTimer = S_REROLL_TIME;
 
-    WaitUntil(ThrottleOf() != Vector(), 99999);
+    WaitUntil(
+        ThrottleOf() != Vector() ||
+        IsPrimaryHeld() ||
+        IsSecondaryHeld() ||
+        IsAbility1Held() ||
+        IsAbility2Held() ||
+        IsInteractHeld() ||
+        IsMeleeHeld() ||
+        IsReloadHeld() || 
+        IsJumpHeld() || 
+        IsCrouchHeld(), 
+        99999);
 
-    ChaseVariableOverTime(rerollTimer, 0, S_REROLL_TIME, TimeChaseReevaluation.DestinationAndDuration);
+    ChaseVariableOverTime(heroRerollTimer, 0, S_REROLL_TIME, TimeChaseReevaluation.DestinationAndDuration);
 }
 
 rule: "[All] :: Hero Reroll Expired"
 Event.OngoingPlayer
 if (!IsDummyBot())
 if (canReroll)
-if (rerollTimer == 0 || IsDead())
+if (heroRerollTimer == 0 || IsDead())
 {
     canReroll = false;
-    rerolled = true; // the player technically didnt reroll but whatever
+    heroRerolled = true; // the player technically didnt reroll but whatever
 }

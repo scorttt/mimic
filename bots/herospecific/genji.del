@@ -5,7 +5,7 @@ disabled rule: "---------------- Genji ----------------"{}
 rule: "[HS] :: Genji On"
 Event.OngoingPlayer
 Player.Genji
-if (s_genji_nerf)
+if (S_NERF_GENJI)
 if (IsUsingAbility1())
 {
     StartDamageModification(EnemyPlayers(), player, S_GENJI_DAMAGE);

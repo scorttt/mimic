@@ -1,9 +1,9 @@
 import "../main.del";
 
-playervar Boolean attacked; // bool for if bot is attacked
-playervar Boolean bot_alive; // bot is alive
-playervar Number max_health; // maximum health a bot spawned with
-playervar Any[] clone_effect;
+playervar Boolean botAttacked; // bool for if bot is attacked
+playervar Boolean isBotAlive; // bot is alive
+playervar Number maxHealth; // maximum health a bot spawned with
+playervar Any[] cloneEffect;
 
 
 disabled rule: "---------------- Bot ----------------"{}
@@ -30,9 +30,9 @@ if (!IsDuplicating())
     //             : Color.Team2);
     // }
 
-    if (s_echo_effect)
+    if (S_ECHO_EFFECT)
     {
-        DestroyEffect(clone_effect);
+        DestroyEffect(cloneEffect);
 
         Wait(2);
 
@@ -40,7 +40,7 @@ if (!IsDuplicating())
         TeamOf() == Team.Team1 
                 ? Color.Team1
                 : Color.Team2);
-        clone_effect = LastCreatedEntity();
+        cloneEffect = LastCreatedEntity();
     }
 }
 
@@ -49,7 +49,7 @@ Event.OngoingPlayer
 if (IsDummyBot())
 if (IsAlive())
 {
-    bot_alive = true;
+    isBotAlive = true;
 
     EnableRespawning();
 
@@ -70,8 +70,8 @@ Event.OngoingPlayer
 if (IsDummyBot())
 if (IsDead())
 {
-    bot_alive = false;
-    attacked = false;
+    isBotAlive = false;
+    botAttacked = false;
     SetUltimateCharge(player, 0);
     SetUltimateAbilityEnabled(player, false);
 }
@@ -97,7 +97,7 @@ Event.OngoingPlayer
 if (IsDummyBot())
 if (!IsDuplicating(owner))
 if (UltimateChargePercent(owner) == 100)
-if (bot_alive)
+if (isBotAlive)
 {
     SetUltimateAbilityEnabled(player, true);
     SetUltimateCharge(player, 100);

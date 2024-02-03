@@ -9,7 +9,7 @@ if (IsDummyBot())
 if (IsDuplicating())
 if (IsDuplicating(owner))
 if (UltimateChargePercent(owner) == 100)
-if (bot_alive)
+if (isBotAlive)
 {
     SetUltimateAbilityEnabled(player, true);
     SetUltimateCharge(player, 100);
@@ -21,9 +21,9 @@ Player.Echo
 if (IsDummyBot())
 if (IsDuplicating())
 {
-    max_health = MaxHealth();
+    maxHealth = MaxHealth();
 
-    DestroyEffect(clone_effect);
+    DestroyEffect(cloneEffect);
 }
 
 rule: "[HS] :: Echo No Clone"
@@ -32,5 +32,5 @@ Player.Echo
 if (IsDummyBot())
 if (!IsDuplicating())
 {
-    max_health = MaxHealth();
+    maxHealth = MaxHealth();
 }

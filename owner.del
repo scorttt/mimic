@@ -1,17 +1,16 @@
 import "main.del";
 
 playervar Player owner; // player who owns a set of bots
-playervar Player[] owner_bots; // array of bots owned
+playervar Player[] ownerBots; // array of bots owned
 // playervar Player[] living_bots; // array of all living bots. todo: i technically dont even need this and can just check owner_bots with bot_alive
-playervar Boolean owner_alive; // whether the owner is alive
-playervar Boolean is_rezzing; // checks if the owner is replacing a bot
-playervar Any heal_ot; // heal over time for the owner
-playervar Number attack_timer; // attacked timer
+playervar Boolean isOwnerAlive; // whether the owner is alive
+playervar Boolean isOwnerReplacingBot; // checks if the owner is replacing a bot
+playervar Number attackTimer; // attacked timer
 
-Player[] owned_bots: FilteredArray(AllyPlayers(), Curr().owner == player && IsDummyBot(Curr()) && EntityExists(Curr()));        // owner bots
-Player[] living_bots: FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && IsAlive() && Curr().owner == player);
-Player[] humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()));                                                             // all human players on a team
-Player[] spawned_humans: FilteredArray(AllyPlayers(), !IsDummyBot(Curr()) && HasSpawned(Curr()));                               // all human players on a team that have spawned
+Player[] OwnedBots(): FilteredArray(AllyPlayers(), Curr().owner == player && IsDummyBot(Curr()) && EntityExists(Curr()));        // owner bots
+Player[] LivingBots(): FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && IsAlive() && Curr().owner == player);
+Player[] Humans(): FilteredArray(AllyPlayers(), !IsDummyBot(Curr()));                                                             // all human players on a team
+Player[] SpawnedHumans(): FilteredArray(AllyPlayers(), !IsDummyBot(Curr()) && HasSpawned(Curr()));                               // all human players on a team that have spawned
 
 disabled rule: "---------------- Owner ----------------"{}
 
@@ -20,7 +19,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (HasSpawned())
 if (IsAlive())
-if (owned_bots.Length < Floor((teamSize.Length - spawned_humans.Length) / humans.Length))
+if (OwnedBots().Length < Floor((teamSize.Length - SpawnedHumans().Length) / Humans().Length))
 {
     // sets the slot for the bot to be created in if there is no entity present and no dummy bot exists at the end of the team_size. returns a number
     botSlot = FilteredArray(teamSize, 
@@ -39,13 +38,13 @@ if (owned_bots.Length < Floor((teamSize.Length - spawned_humans.Length) / humans
 
     LoopIfConditionIsTrue();
 
-    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
+    ownerBots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Owner] :: Destroy Bots"
 Event.OngoingPlayer
 if (!IsDummyBot())
-if (owned_bots.Length > Floor((teamSize.Length - humans.Length) / humans.Length))
+if (OwnedBots().Length > Floor((teamSize.Length - Humans().Length) / Humans().Length))
 {
     DestroyDummyBot(TeamOf(), 
                     LastOf(FilteredArray(teamSize, 
@@ -55,7 +54,7 @@ if (owned_bots.Length > Floor((teamSize.Length - humans.Length) / humans.Length)
 
     LoopIfConditionIsTrue();
 
-    owner_bots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
+    ownerBots = FilteredArray(AllyPlayers(), IsDummyBot(Curr()) && Curr().owner == player);
 }
 
 rule: "[Owner] :: Replace Healthiest Bot"
@@ -65,58 +64,58 @@ if (!EventWasEnvironment())
 if (IsTrueForAny(AllLivingPlayers(TeamOf()), Curr().owner == player && IsDummyBot(Curr())))
 {
     Number[] ammo;
-    Player[] bots = owner_bots;
-    is_rezzing = true;
+    Player[] bots = ownerBots;
+    isOwnerReplacingBot = true;
     // Player new_player = FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player);
-    Player new_player = LastOf(SortedArray(FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
-    Vector position_of = PositionOf(new_player);
-    Vector facing = Facing(new_player);
-    Number health_of = Health(new_player);
-    ammo[0] = Ammo(new_player, 0);
-    ammo[1] = Ammo(new_player, 1);
-    Kill(new_player);
-    Teleport(player, position_of);
+    Player newPlayer = LastOf(SortedArray(FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
+    Vector posOf = PositionOf(newPlayer);
+    Vector facing = Facing(newPlayer);
+    Number healthOf = Health(newPlayer);
+    ammo[0] = Ammo(newPlayer, 0);
+    ammo[1] = Ammo(newPlayer, 1);
+    Kill(newPlayer);
+    Teleport(player, posOf);
     SetFacing(player, facing, Relative.ToWorld);
     Resurrect();
     MinWait();
-    SetPlayerHealth(player, health_of);
+    SetPlayerHealth(player, healthOf);
     SetAmmo(player, 0, ammo[0]);
     SetAmmo(player, 1, ammo[1]);
     CancelPrimaryAction(bots);
-    is_rezzing = false;
+    isOwnerReplacingBot = false;
 }
 
 rule: "[Owner] :: Alive"
 Event.OngoingPlayer
 if (!IsDummyBot())
 if (IsAlive())
-if (!is_rezzing)
+if (!isOwnerReplacingBot)
 {
-    owner_alive = true;
+    isOwnerAlive = true;
 }
 
 rule: "[Owner] :: Dead"
 Event.OngoingPlayer
 if (!IsDummyBot())
 if (IsDead())
-if (!is_rezzing)
+if (!isOwnerReplacingBot)
 {
-    owner_alive = false;
-    rerolled = false;
-    randomized = false;
+    isOwnerAlive = false;
+    heroRerolled = false;
+    heroRandomized = false;
 
-    WaitUntil(owner_alive, 99999); // wait until the owner is alive
-    Respawn(owner_bots);
-    EnableRespawning(owner_bots);
-    EnableNameplates(owner_bots, All());
+    WaitUntil(isOwnerAlive, 99999); // wait until the owner is alive
+    Respawn(ownerBots);
+    EnableRespawning(ownerBots);
+    EnableNameplates(ownerBots, All());
 }
 
 rule: "[Owner] :: Prevent Bot Spawning"
 Event.OngoingPlayer
-if (!owner_alive)
+if (!isOwnerAlive)
 {
-    DisableRespawning(owner_bots);
-    DisableNameplates(owner_bots, All()); // overwatch has a bug where if the players spawning is disabled and is dead their corpse will have a nameplate
+    DisableRespawning(ownerBots);
+    DisableNameplates(ownerBots, All()); // fix overwatch bug where if the players spawning is disabled and is dead corpses will have a nameplate
 }
 
 // FilteredArray(AllDeadPlayers(TeamOf()), IsDummyBot(Curr()) && Curr().owner == player)
@@ -126,14 +125,14 @@ Event.OnDeath
 if (!IsDummyBot()) 
 if (EventWasEnvironment())
 {
-    Kill(owner_bots, Attacker() != player ? Attacker() : null);
+    Kill(ownerBots, Attacker() != player ? Attacker() : null);
 }
 
 rule: "[Owner] :: Respawn Failsafe"
 Event.OngoingPlayer
 if (!IsDummyBot())
 if (IsDead())
-if (!is_rezzing)
+if (!isOwnerReplacingBot)
 {
     WaitIfTrue(S_RESPAWN_TIME + 1);
     Respawn();

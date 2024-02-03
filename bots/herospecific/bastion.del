@@ -5,7 +5,7 @@ disabled rule: "---------------- Bastion ----------------"{}
 rule: "[HS] :: Bastion Turret After Bot Spawns"
 Event.OngoingPlayer
 Player.Bastion
-if (bot_alive)
+if (isBotAlive)
 if (IsInAlternateForm(owner))
 {
     Wait(0.15);

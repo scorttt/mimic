@@ -5,7 +5,7 @@ disabled rule: "---------------- Mei ----------------"{}
 rule: "[HS] :: Mei Ice Block After Bot Spawn"
 Event.OngoingPlayer
 Player.Mei
-if (bot_alive)
+if (isBotAlive)
 if (IsUsingAbility1(owner))
 {
     Wait(0.15);
@@ -16,7 +16,7 @@ if (IsUsingAbility1(owner))
 rule: "[HS] :: Mei Cancel Ice Block"
 Event.OngoingPlayer
 Player.Mei
-if (bot_alive)
+if (isBotAlive)
 if (!IsUsingAbility1(owner))
 {
     // Wait(0.15);

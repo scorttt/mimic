@@ -23,7 +23,7 @@ if (IsUsingAbility1())
 rule: "[HS] :: Sombra Stealth After Bot Spawns"
 Event.OngoingPlayer
 Player.Sombra
-if (bot_alive)
+if (isBotAlive)
 if (IsUsingAbility1(owner))
 {
     Wait(0.15);

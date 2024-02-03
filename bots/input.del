@@ -4,7 +4,7 @@ disabled rule: "---------------- Input Emulation (IE) ----------------"{}
 
 rule: "[IE] :: Aim & Movement"
 Event.OngoingPlayer
-if (bot_alive)
+if (isBotAlive)
 {
     StartThrottleInDirection(player, WorldVectorOf(ThrottleOf(owner), owner), ThrottleOf(owner) != Vector());
 
@@ -18,7 +18,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (IsCommunicating(player, Communication.Hello))
 {
-    Communicate(owner_bots, Communication.Hello);
+    Communicate(ownerBots, Communication.Hello);
 }
 
 rule: "[IE] :: Weapon 1"
@@ -26,7 +26,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (Weapon() == 1)
 {
-    SetWeapon(owner_bots, 1);
+    SetWeapon(ownerBots, 1);
 }
 
 rule: "[IE] :: Weapon 2"
@@ -34,7 +34,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (Weapon() == 2)
 {
-    SetWeapon(owner_bots, 2);
+    SetWeapon(ownerBots, 2);
 }
 
                     // button pressed //
@@ -45,7 +45,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.PrimaryFire))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.PrimaryFire);
+    StartHoldingButton(ownerBots, Button.PrimaryFire);
 }
 
 rule: "[IE] :: Pressed Secondary"
@@ -54,7 +54,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.SecondaryFire))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.SecondaryFire);
+    StartHoldingButton(ownerBots, Button.SecondaryFire);
 }
 
 rule: "[IE] :: Pressed Ability 1"
@@ -63,7 +63,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Ability1))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Ability1);
+    StartHoldingButton(ownerBots, Button.Ability1);
 }
 
 rule: "[IE] :: Pressed Ability 2"
@@ -72,7 +72,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Ability2))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Ability2);
+    StartHoldingButton(ownerBots, Button.Ability2);
 }
 
 rule: "[IE] :: Pressed Jump"
@@ -81,7 +81,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Jump))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Jump);
+    StartHoldingButton(ownerBots, Button.Jump);
 }
 
 rule: "[IE] :: Pressed Crouch"
@@ -90,7 +90,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Crouch))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Crouch);
+    StartHoldingButton(ownerBots, Button.Crouch);
 }
 
 rule: "[IE] :: Pressed Melee"
@@ -99,7 +99,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Melee))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Melee);
+    StartHoldingButton(ownerBots, Button.Melee);
 }
 
 rule: "[IE] :: Pressed Reload"
@@ -108,7 +108,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Reload))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Reload);
+    StartHoldingButton(ownerBots, Button.Reload);
 }
 
 rule: "[IE] :: Pressed Ultimate"
@@ -117,7 +117,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Ultimate))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Ultimate);
+    StartHoldingButton(ownerBots, Button.Ultimate);
 }
 
 rule: "[IE] :: Pressed Interact"
@@ -126,7 +126,7 @@ if (!IsDummyBot())
 if (IsButtonHeld(player, Button.Interact))
 if (IsAlive())
 {
-    StartHoldingButton(owner_bots, Button.Interact);
+    StartHoldingButton(ownerBots, Button.Interact);
 }
 
                         // release //
@@ -136,7 +136,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.PrimaryFire) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.PrimaryFire);
+    StopHoldingButton(ownerBots, Button.PrimaryFire);
 }
 
 rule: "[IE] :: Released Secondary"
@@ -144,7 +144,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.SecondaryFire) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.SecondaryFire);
+    StopHoldingButton(ownerBots, Button.SecondaryFire);
 }
 
 rule: "[IE] :: Released Ability 1"
@@ -152,7 +152,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Ability1) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Ability1);
+    StopHoldingButton(ownerBots, Button.Ability1);
 }
 
 rule: "[IE] :: Released Ability 2"
@@ -160,7 +160,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Ability2) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Ability2);
+    StopHoldingButton(ownerBots, Button.Ability2);
 }
 
 rule: "[IE] :: Released Jump"
@@ -168,7 +168,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Jump) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Jump);
+    StopHoldingButton(ownerBots, Button.Jump);
 }
 
 rule: "[IE] :: Released Crouch"
@@ -176,7 +176,7 @@ Event.OngoingPlayer
 if (!IsDummyBot()) 
 if (!IsButtonHeld(player, Button.Crouch) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Crouch);
+    StopHoldingButton(ownerBots, Button.Crouch);
 }
 
 rule: "[IE] :: Released Melee"
@@ -184,7 +184,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Melee) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Melee);
+    StopHoldingButton(ownerBots, Button.Melee);
 }
 
 rule: "[IE] :: Released Reload"
@@ -192,7 +192,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Reload) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Reload);
+    StopHoldingButton(ownerBots, Button.Reload);
 }
 
 rule: "[IE] :: Released Ultimate"
@@ -200,7 +200,7 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Ultimate) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Ultimate);
+    StopHoldingButton(ownerBots, Button.Ultimate);
 }
 
 rule: "[IE] :: Released Interact"
@@ -208,5 +208,5 @@ Event.OngoingPlayer
 if (!IsDummyBot())
 if (!IsButtonHeld(player, Button.Interact) || IsDead())
 {
-    StopHoldingButton(owner_bots, Button.Interact);
+    StopHoldingButton(ownerBots, Button.Interact);
 }

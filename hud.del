@@ -1,22 +1,13 @@
 import "main.del";
 
-playervar Number kills; // amount of kills owner and bots have
-playervar Number deaths; // amount of deaths owner and bots have
-playervar Number damage_dealt; // amount of damage owner and bots have done
-playervar Number damage_taken; // amount of damage owner and bots have taken
-playervar Number heal_dealt; // amount of healing owner and bots have done
-playervar Number heal_taken; // amount of healing owner and bots have recieved
-
 Number percentage: (NormalizedHealth() * 100);
 Number r: (percentage <= 50) ? 255 : Floor(256 - (percentage - 50) * 5.12);
 Number g: (percentage >= 50) ? 255 : Floor(percentage * 5.12);
-Color health_color: CustomColor(r, g, 0, 255);
+Color healthColor: CustomColor(r, g, 0, 255);
 
 Vector MenuYFromMenuZ(Vector z): DirectionFromAngles(HorizontalAngleFromDirection(z), VerticalAngleFromDirection(z) - 90);
 Any RenderPosOf(Number x = 0, Number y = 0): 
     Update(EyePos(local) + 100 * (x * Cross(Facing(local), MenuYFromMenuZ(Facing(local))) + y * MenuYFromMenuZ(Facing(local)) + 3 * Facing(local)));
-
-// Color health_color: Colors.Gradient(new ComponentColor(Color.Red), new ComponentColor(Color.Green), NormalizedHealth());
 
 disabled rule: "---------------- HUD Text ----------------"{}
 
@@ -29,7 +20,7 @@ rule: "[HUD] :: Init"
     s = "SsŚśŜŝŞşŠšƧƨȘșЅṠṡṢṣṤṥṦṧṨṩＳｓƵƶŹźŻżŽžẐẑẒẓẔẕΖＺｚǄǅǆǱǲǳ";
 }
 
-Number rerollPerc: (local.rerollTimer / S_REROLL_TIME);
+Number rerollPerc: (local.heroRerollTimer / S_REROLL_TIME);
 rule: "[HUD] :: Hero Reroll Timer"
 {
     CreateInWorldText(
@@ -40,7 +31,7 @@ rule: "[HUD] :: Hero Reroll Timer"
         Clipping: Clipping.DoNotClip);
 
     CreateProgressBarInWorldText(
-        VisibleTo: local.rerollTimer < S_REROLL_TIME && local.canReroll && IsInSpawnRoom(local) ? local : null, 
+        VisibleTo: local.heroRerollTimer < S_REROLL_TIME && local.canReroll && IsInSpawnRoom(local) ? local : null, 
         Value: rerollPerc * 100, 
         Text: "",
         Position: RenderPosOf(0, -1.2),
@@ -59,18 +50,18 @@ rule: "[HUD] :: Bot Under Attack"
 Event.OnDamageTaken
 if (IsDummyBot())
 {
-    attacked = true;
-    attack_timer = S_TIMER_DUR;
-    StopChasingVariable(attack_timer);
-    ChaseVariableAtRate(attack_timer, 0, 1, RateChaseReevaluation.None);
+    botAttacked = true;
+    attackTimer = S_TIMER_DUR;
+    StopChasingVariable(attackTimer);
+    ChaseVariableAtRate(attackTimer, 0, 1, RateChaseReevaluation.None);
 }
 
 rule: "[HUD] :: Bot Attack Timer End"
 Event.OngoingPlayer
 if (IsDummyBot())
-if (attack_timer == 0)
+if (attackTimer == 0)
 {
-    attacked = false;
+    botAttacked = false;
 }
 
 // rule: "[HUD] :: Stats"
@@ -95,7 +86,7 @@ if (IsDummyBot())
 if (HasSpawned())
 {
     // MaxHealth() updates dynamically
-    max_health = MaxHealth();
+    maxHealth = MaxHealth();
 
     CreateHudText(owner, 
     Header:         !IsDuplicating() ? HeroIconString(HeroOf()) : HeroIconString(HeroBeingDuplicated()),
@@ -222,7 +213,7 @@ if (HasSpawned())
         : "",
         
     // statuses
-    attacked 
+    botAttacked 
         ? IconString(Icon.Warning) 
         : "",
     cced 
@@ -230,8 +221,8 @@ if (HasSpawned())
         : "",
 
     // status brackets
-    cced || attacked ? "【 " : "", 
-    cced || attacked ? " 】" : ""> 
+    cced || botAttacked ? "【 " : "", 
+    cced || botAttacked ? " 】" : ""> 
 
     : "DEAD",
 
@@ -244,16 +235,16 @@ if (HasSpawned())
             : "">,
     Location:       Location.Left, 
     SortOrder:      SlotOf() + 1, 
-    HeaderColor:    (Health() > max_health) && !IsDuplicating()
+    HeaderColor:    (Health() > maxHealth) && !IsDuplicating()
                         ? Color.Blue
                         : IsAlive() 
-                            ? health_color
+                            ? healthColor
                             : Color.Black, 
     SubheaderColor: Color.White, 
-    TextColor:      (Health() > max_health) && !IsDuplicating()
+    TextColor:      (Health() > maxHealth) && !IsDuplicating()
                         ? Color.Blue
                         : IsAlive() 
-                            ? health_color
+                            ? healthColor
                             : Color.Black, 
     Reevaluation:   HudTextRev.VisibleToSortOrderStringAndColor);
 }

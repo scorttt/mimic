@@ -5,7 +5,7 @@ disabled rule: "---------------- Illari ----------------"{}
 rule: "[HS] :: Illari Destroy Old Pylon"
 Event.OngoingPlayer
 Player.Illari
-if (bot_alive)
+if (isBotAlive)
 if (IsInteractHeld(owner))
 {
     PressButton(player, Button.Ability2);

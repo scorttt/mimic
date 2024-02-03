@@ -8,5 +8,5 @@ Player.Reaper
 if (!IsDummyBot())
 if (!IsUsingAbility2())
 {
-    CancelPrimaryAction(living_bots);
+    CancelPrimaryAction(LivingBots());
 }
