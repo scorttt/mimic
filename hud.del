@@ -90,8 +90,8 @@ if (HasSpawned())
 
     CreateHudText(owner, 
     Header:         !IsDuplicating() ? HeroIconString(HeroOf()) : HeroIconString(HeroBeingDuplicated()),
-    Subheader:      IsAlive() ? <"<0><1><2><3><4><5><6><7><8><9><12><10><11><13>",
-    // ability 1 charges
+    Subheader:      IsAlive() ? <"<0><1><2><3><4><5><6><7><8><9><10><13><11><12><14>",
+    // ability 1 charges 0
     ArrayContains(a1cArr, HeroOf()) || 
     ArrayContains(a1cArr, HeroBeingDuplicated()) 
         ? AbilityCharge(player, Button.Ability1) > 0 
@@ -101,7 +101,7 @@ if (HasSpawned())
             : "         "
         : "",
 
-    // ability 1
+    // ability 1 1
     !ArrayContains(a1cArr, HeroOf()) && 
     !ArrayContains(a1cArr, HeroBeingDuplicated()) && 
     !IsHero(Hero.Lucio) 
@@ -114,7 +114,7 @@ if (HasSpawned())
                 : <"<0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability1)>> 
         : "",
 
-    // lucio ability 1
+    // lucio ability 1 2
     IsHero(Hero.Lucio)
         ? <"<0>", AbilityCooldown(player, Button.Ability1) != 0 
             ? <"    <0>    ", Ceil(AbilityCooldown(player, Button.Ability1))> 
@@ -123,7 +123,7 @@ if (HasSpawned())
                 : <"<0> + ", AbilityIconString(HeroOf(), Button.Ability1)>> 
         : "",
 
-    // ability 2 charges
+    // ability 2 charges 3
     ArrayContains(a2cArr, HeroOf()) || 
     ArrayContains(a2cArr, HeroBeingDuplicated()) 
         ? AbilityCharge(player, Button.Ability2) > 0 
@@ -131,7 +131,7 @@ if (HasSpawned())
             : "          "
         : "",
 
-    // ability 2
+    // ability 2 4=
     !ArrayContains(a2cArr, HeroOf()) &&
     !ArrayContains(a2cArr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Ability2) != 0 
@@ -143,7 +143,7 @@ if (HasSpawned())
                 : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Ability2)>> 
         : "",
 
-    // secondary fire
+    // secondary fire 5
     ArrayContains(sfArr, HeroOf()) || 
     ArrayContains(sfArr, HeroBeingDuplicated()) || 
     !IsDuplicating() && IsHero(Hero.Echo) 
@@ -156,15 +156,15 @@ if (HasSpawned())
                 : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.SecondaryFire)>
         : "",
 
-    // // secondary fire resources
-    // ArrayContains(sfrArr, HeroOf()) || 
-    // ArrayContains(sfrArr, HeroBeingDuplicated()) 
-    //     ? <" <0> <1> ", AbilityIconString(IsDuplicating()
-    //                                         ? HeroBeingDuplicated() 
-    //                                         : HeroOf(), Button.SecondaryFire), Near(AbilityResource(player, Button.SecondaryFire))> 
-    //     : "",
+    // secondary fire resources 6
+    ArrayContains(sfrArr, HeroOf()) || 
+    ArrayContains(sfrArr, HeroBeingDuplicated()) 
+        ? <" <0> <1> ", AbilityIconString(IsDuplicating()
+                                            ? HeroBeingDuplicated() 
+                                            : HeroOf(), Button.SecondaryFire), Near(AbilityResource(player, Button.SecondaryFire))> 
+        : "",
 
-    // primary fire
+    // primary fire 7
     ArrayContains(pfArr, HeroOf()) || 
     ArrayContains(pfArr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.PrimaryFire) != 0 
@@ -176,7 +176,7 @@ if (HasSpawned())
                 : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.PrimaryFire)>> 
         : "",
 
-    // primary fire resources
+    // primary fire resources 8
     ArrayContains(pfrArr, HeroOf()) || 
     ArrayContains(pfrArr, HeroBeingDuplicated()) 
         ? <" <0> <1> ", AbilityIconString(IsDuplicating()
@@ -184,7 +184,7 @@ if (HasSpawned())
                                             : HeroOf(), Button.PrimaryFire), Near(AbilityResource(player, Button.PrimaryFire))> 
         : "",
 
-    // jump
+    // jump 9
     ArrayContains(jArr, HeroOf()) ||
     ArrayContains(jArr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Jump) != 0 
@@ -194,7 +194,7 @@ if (HasSpawned())
             : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Jump)>>
         : "",
 
-    // // jump resources
+    // // jump resources 10
     // ArrayContains(jrArr, HeroOf()) || 
     // ArrayContains(jrArr, HeroBeingDuplicated()) 
     //     ? <" <0> <1> ", AbilityIconString(IsDuplicating()
@@ -202,7 +202,7 @@ if (HasSpawned())
     //                                         : HeroOf(), Button.Jump), Near(AbilityResource(player, Button.Jump))> 
     //     : "",
 
-    // crouch
+    // crouch 11
     ArrayContains(cArr, HeroOf()) ||
     ArrayContains(cArr, HeroBeingDuplicated()) 
         ? <"<0>", AbilityCooldown(player, Button.Crouch) != 0 
@@ -212,17 +212,17 @@ if (HasSpawned())
             : <" <0> ", AbilityIconString(IsDuplicating() ? HeroBeingDuplicated() : HeroOf(), Button.Crouch)>>
         : "",
         
-    // statuses
-    botAttacked 
+    // statuses 
+    botAttacked // 12
         ? IconString(Icon.Warning) 
         : "",
-    cced 
+    cced // 13
         ? IconString(Icon.Dizzy) 
         : "",
 
     // status brackets
-    cced || botAttacked ? "【 " : "", 
-    cced || botAttacked ? " 】" : ""> 
+    cced || botAttacked ? "【 " : "", // 14
+    cced || botAttacked ? " 】" : ""> // 15 
 
     : "DEAD",
 

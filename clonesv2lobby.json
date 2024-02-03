@@ -38,7 +38,7 @@
           "Mercy"
         ],
         "Echo": {
-          "Damage Dealt": 50.0
+          "Damage Dealt": 70.0
         },
         "Lúcio": {
           "Healing Dealt": 75.0
@@ -51,23 +51,24 @@
           "Healing Dealt": 70.0
         },
         "Symmetra": {
-          "Damage Dealt": 50.0
+          "Damage Dealt": 70.0
         },
         "Torbjörn": {
-          "Damage Dealt": 60.0
+          "Damage Dealt": 80.0
         },
         "Winston": {
           "Barrier Projector Cooldown Time": 130.0,
           "Damage Dealt": 50.0
         },
         "Ramattra": {
-          "Damage Dealt": 50.0
+          "Damage Dealt": 70.0
         },
         "Orisa": {
           "Damage Dealt": 50.0
         },
         "Wrecking Ball": {
-          "Adaptive Shield Cooldown Time": 125.0
+          "Adaptive Shield Cooldown Time": 125.0,
+          "Damage Dealt": 50.0
         }
       }
     }, 

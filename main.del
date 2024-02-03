@@ -57,9 +57,9 @@ rule: "Initial Global"
     sfArr = [Hero.Orisa, Hero.Reinhardt, Hero.Sigma, Hero.WreckingBall, Hero.Doomfist, Hero.Sombra, Hero.Soldier76, Hero.Brigitte, Hero.Lucio, Hero.JunkerQueen, Hero.Ramattra, Hero.Bastion]; // secondary fire
     pfrArr = [Hero.Moira]; // primary fire resources
     sfrArr = [Hero.Dva, Hero.Roadhog]; // secondary fire resources
-    a1cArr = [Hero.Tracer, Hero.Symmetra, Hero.Junkrat]; // ability 1 charges
+    a1cArr = [Hero.Tracer, Hero.Symmetra, Hero.Junkrat, Hero.Zarya]; // ability 1 charges
     // a2Arr = [Hero.Brigitte]; // uses charges instead
-    a2cArr = [Hero.Brigitte]; // ability 2 charges
+    a2cArr = [Hero.Brigitte, Hero.Zarya]; // ability 2 charges
     jArr = [Hero.Hanzo, Hero.Lifeweaver]; // jump
     // jrArr = [Hero.Pharah]; // jump resources (too laggy)
     cArr = [Hero.WreckingBall]; // crouch
@@ -77,7 +77,7 @@ rule: "Initial Global"
     S_ECHO_EFFECT = WorkshopSettingToggle("General", "Bots use Echo Clone Effect (On)", true, 5);
 
     S_RANDOM_HERO = WorkshopSettingToggle("Random", "Random Hero (On)", true, 0);
-    S_REROLL_TIME = WorkshopSettingReal("Random", "Random Hero Reroll Time (20)", 20, 0, 60, 1);
+    S_REROLL_TIME = WorkshopSettingReal("Random", "Random Hero Reroll Time (10)", 10, 0, 300, 1);
 
     S_DISTANCE = WorkshopSettingReal("Teleport", "Teleport Distance (12)", 12, 0, 100, 1);
     S_OOS_TIME = WorkshopSettingReal("Teleport", "Out of LOS Teleport Time (0.25)", 0.25, 0.016, 5, 2);
@@ -99,7 +99,7 @@ rule: "[All] :: Assembling Heroes Time"
 if (IsAssemblingHeroes())
 {
     if (S_RANDOM_HERO) 
-        SetMatchTime(1);
+        SetMatchTime(0);
     else 
         SetMatchTime(10);
 }
@@ -164,6 +164,15 @@ void SetRandomHero(Player player = player) playervar "Set Random hero"
     heroRandomized = true;
 }
 
+rule: "[All] :: Inbetween Rounds"
+Event.OngoingPlayer
+if (IsBetweenRounds())
+{
+    Wait(5);
+    heroRandomized = false;
+    SetRandomHero();
+}
+
 rule: "[All] :: Automatically Force Hero"
 Event.OngoingPlayer
 if (S_RANDOM_HERO)
@@ -171,7 +180,7 @@ if (!HasSpawned())
 {
     SetRandomHero();
 
-    Wait(1);
+    MinWait();
     LoopIfConditionIsTrue();
 }
 

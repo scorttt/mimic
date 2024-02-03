@@ -105,8 +105,12 @@ if (IsDead())
 if (!isOwnerReplacingBot)
 {
     isOwnerAlive = false;
-    heroRerolled = false;
-    heroRandomized = false;
+
+    if (S_RANDOM_HERO)
+    {
+        heroRerolled = false;
+        heroRandomized = false;
+    }
 
     WaitUntil(isOwnerAlive, 99999); // wait until the owner is alive
     Respawn(ownerBots);
