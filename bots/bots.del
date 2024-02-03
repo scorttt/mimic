@@ -137,26 +137,31 @@ void TeleportBotFallback() playervar "Teleport Fallback Sub"
     PlayEffect(All(), PlayEffect.TracerRecallReappearEffect, Color.White, player);
 }
 
-
+playervar Boolean botRelocating;
 rule: "[Bot] :: Owner out of range"
 Event.OngoingPlayer
 if (isBotAlive)
 if (IsAlive(owner))
 if (!cced)
-if (DistanceBetween(PosOf(owner), PosOf()) > S_DISTANCE || !IsInLineOfSight(owner, player))
+if (DistanceBetween(owner, player) > S_DISTANCE || (!IsInLineOfSight(EyePos(owner), EyePos(player)) && !IsInLineOfSight(EyePos(owner), PosOf(player))))
 {
-    SetGravity(player, 0);
-    DisableMovementCollisionWithEnvironment(player, true);
+    WaitIfTrue(S_OOS_TIME);
 
-    while (IsAlive() && (DistanceBetween(PosOf(owner), PosOf()) > 1 || !IsInLineOfSight(owner, player)))
-    {
-        ApplyImpulse(player, DirectionTowards(player, owner), 10, Relative.ToWorld, ContraryMotion.Cancel);
-        Wait(0.1);
-    }
+    botRelocating = true;
 
-    StopAllMomentum();
-    SetGravity(player, 100);
-    EnableMovementCollisionWithEnvironment(player);
+    Vector botPos = PosOf();
+
+    ChaseVariableAtRate(botPos, PosOf(owner) + WorldVectorOf(Vector(0, 0, -1.0), owner), 10, RateChaseReevaluation.DestinationAndRate);
+    StartForcingPlayerPosition(player, botPos, true);
+
+    WaitUntil(
+        DistanceBetween(owner, player) < S_DISTANCE && 
+        IsInLineOfSight(EyePos(owner), EyePos(player)) && 
+        IsInLineOfSight(EyePos(owner), PosOf(player)), 
+        99999);
+
+    botRelocating = false;
+    StopForcingPlayerPosition();
 }
 
 rule: "[Bot] :: Teleport bot fallback"
@@ -164,7 +169,8 @@ Event.OngoingPlayer
 if (isBotAlive)
 if (IsAlive(owner))
 if (DistanceBetween(PosOf(owner), PosOf()) > S_DISTANCE || !IsInLineOfSight(owner, player))
-if (!IsInSpawnRoom(owner) && IsInSpawnRoom())
+if (!IsInSpawnRoom(owner))
+if (IsInSpawnRoom())
 {
     TeleportBotFallback();
 }

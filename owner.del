@@ -65,9 +65,13 @@ if (IsTrueForAny(AllLivingPlayers(TeamOf()), Curr().owner == player && IsDummyBo
 {
     Number[] ammo;
     Player[] bots = ownerBots;
+
     isOwnerReplacingBot = true;
-    // Player new_player = FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player);
-    Player newPlayer = LastOf(SortedArray(FilteredArray(AllLivingPlayers(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
+    Player newPlayer = LastOf(SortedArray(FilteredArray(AllLiving(), Curr() != player && Curr().owner == player), NormalizedHealth(Curr())));
+
+    if (newPlayer.botRelocating)
+        WaitUntil(!newPlayer.botRelocating, 99999);
+
     Vector posOf = PositionOf(newPlayer);
     Vector facing = Facing(newPlayer);
     Number healthOf = Health(newPlayer);
